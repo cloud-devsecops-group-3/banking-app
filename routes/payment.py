@@ -1,48 +1,42 @@
 # ============================================================
 # routes/payment.py
-# Handles the full payment flow using a Flask Blueprint.
+# Handles the full payment flow.
 #
-# A Blueprint is a way to organize routes into separate files.
-# This Blueprint handles: /pay (GET + POST) and /complete
-#
-# Flow:
-#   GET  /pay               -> Show account selection page
-#   POST /pay               -> Handle account selection, show confirm page
-#   POST /confirm-payment   -> Process payment, redirect to complete
-#   GET  /complete          -> Show transaction complete page
+# FRONTEND PREVIEW MODE
+# ---------------------
+# All database imports are commented out.
+# Routes use mock data from utils/helpers.py.
+# The full 3-page flow works: select → confirm → complete.
 # ============================================================
 
 from flask import Blueprint, render_template, request, redirect, url_for, session, jsonify
+from decimal import Decimal
+
+# These helpers now return mock data instead of DB queries
 from utils.helpers import (
     get_consumer_accounts,
     get_account_by_id,
     get_merchant_by_name,
     process_payment,
 )
-from decimal import Decimal
 
-# Create the Blueprint. "payment" is its internal name.
+# TODO (backend): no extra imports needed — helpers.py handles the swap
+
 payment_bp = Blueprint("payment", __name__)
 
 
 @payment_bp.route("/pay", methods=["GET"])
 def select_account():
     """
-    PAGE 1 - Account Selection
-    Reads order_id, amount, and merchant from the URL query string.
-    Example URL: /pay?order_id=1001&amount=450&merchant=pageturn-books
-    Displays all consumer accounts as selectable cards.
+    PAGE 1 — Account Selection
+    Reads order_id, amount, merchant from the URL.
+    Example: /pay?order_id=1001&amount=450&merchant=pageturn-books
     """
-    # Read payment details from the URL (sent by the Ecommerce app)
-    order_id = request.args.get("order_id")
-    amount = request.args.get("amount")
-    merchant = request.args.get("merchant")
+    order_id = request.args.get("order_id", "1001")       # default for easy preview
+    amount   = request.args.get("amount",   "450.00")
+    merchant = request.args.get("merchant", "pageturn-books")
 
-    # Validate that all required parameters are present
-    if not all([order_id, amount, merchant]):
-        return render_template("error.html", message="Missing payment details. Please scan the QR code again."), 400
-
-    # Validate that amount is a positive number
+    # Validate amount is a positive number
     try:
         amount_decimal = Decimal(str(amount))
         if amount_decimal <= 0:
@@ -50,7 +44,7 @@ def select_account():
     except Exception:
         return render_template("error.html", message="Invalid payment amount."), 400
 
-    # Fetch all consumer accounts to display as cards
+    # get_consumer_accounts() returns mock data in frontend mode
     accounts = get_consumer_accounts()
 
     return render_template(
@@ -65,26 +59,24 @@ def select_account():
 @payment_bp.route("/pay", methods=["POST"])
 def confirm_payment():
     """
-    PAGE 2 - Confirm Payment
-    Receives the selected account_id and payment details from the form.
-    Displays a summary for the user to review before confirming.
+    PAGE 2 — Confirm Payment
+    Receives selected account_id + payment details from the form.
     """
-    # Read form data submitted from the account selection page
     account_id = request.form.get("account_id")
-    order_id = request.form.get("order_id")
-    amount = request.form.get("amount")
-    merchant = request.form.get("merchant")
+    order_id   = request.form.get("order_id")
+    amount     = request.form.get("amount")
+    merchant   = request.form.get("merchant")
 
     if not all([account_id, order_id, amount, merchant]):
         return redirect(url_for("payment.select_account"))
 
-    # Fetch the selected account details
+    # get_account_by_id() searches mock data in frontend mode
     account = get_account_by_id(int(account_id))
     if not account:
         return redirect(url_for("payment.select_account"))
 
     amount_decimal = Decimal(str(amount))
-    balance_after = account.balance - amount_decimal
+    balance_after  = account.balance - amount_decimal
 
     return render_template(
         "confirm_payment.html",
@@ -99,16 +91,14 @@ def confirm_payment():
 @payment_bp.route("/confirm-payment", methods=["POST"])
 def process():
     """
-    Processes the payment after the user clicks "Confirm Payment".
-    Calls the business logic in helpers.py, then redirects to the
-    complete page on success or back to confirm on failure.
+    Processes the payment after "Confirm Payment" is clicked.
+    In frontend mode, process_payment() simulates success without touching the DB.
     """
     account_id = request.form.get("account_id")
-    order_id = request.form.get("order_id")
-    amount = request.form.get("amount")
-    merchant = request.form.get("merchant")
+    order_id   = request.form.get("order_id")
+    amount     = request.form.get("amount")
+    merchant   = request.form.get("merchant")
 
-    # Run the payment logic (deduct, credit, record)
     result = process_payment(
         account_id=int(account_id),
         order_id=order_id,
@@ -117,10 +107,9 @@ def process():
     )
 
     if not result["success"]:
-        # Re-fetch account to show updated confirm page with error
-        account = get_account_by_id(int(account_id))
+        account       = get_account_by_id(int(account_id))
         amount_decimal = Decimal(str(amount))
-        balance_after = account.balance - amount_decimal
+        balance_after  = account.balance - amount_decimal
         return render_template(
             "confirm_payment.html",
             account=account,
@@ -131,12 +120,12 @@ def process():
             error=result["error"],
         )
 
-    # Store transaction details in session to display on the complete page
+    # Store result in session so the complete page can read it
     session["txn"] = {
         "reference": result["reference"],
-        "order_id": order_id,
-        "amount": str(amount),
-        "merchant": merchant,
+        "order_id":  order_id,
+        "amount":    str(amount),
+        "merchant":  merchant,
     }
 
     return redirect(url_for("payment.complete"))
@@ -144,41 +133,31 @@ def process():
 
 @payment_bp.route("/complete")
 def complete():
-    """
-    PAGE 3 - Transaction Complete
-    Reads transaction details from the session and displays the success page.
-    Clears the session data after reading to prevent re-display on refresh.
-    """
+    """PAGE 3 — Transaction Complete. Reads from session."""
     txn = session.pop("txn", None)
 
     if not txn:
-        # If someone navigates here directly without a transaction, redirect home
         return redirect(url_for("dashboard.index"))
 
     return render_template("transaction_complete.html", txn=txn)
 
 
 # ============================================================
-# API Endpoint
-# POST /pay  (JSON)
-# Allows the Ecommerce app to trigger payment programmatically.
+# API endpoint — also works in frontend mode (returns mock response)
+# TODO (backend): process_payment() will do real DB writes once enabled
 # ============================================================
 
 @payment_bp.route("/api/pay", methods=["POST"])
 def api_pay():
-    """
-    API endpoint for programmatic payment processing.
-    Accepts JSON: { "order_id": "1001", "amount": 450, "merchant": "pageturn-books", "account_id": 1 }
-    Returns JSON: { "success": true, "reference": "TXN..." }
-    """
+    """JSON API endpoint for programmatic payment triggering."""
     data = request.get_json()
 
     if not data:
         return jsonify({"success": False, "error": "No JSON body provided."}), 400
 
-    order_id = data.get("order_id")
-    amount = data.get("amount")
-    merchant = data.get("merchant")
+    order_id   = data.get("order_id")
+    amount     = data.get("amount")
+    merchant   = data.get("merchant")
     account_id = data.get("account_id")
 
     if not all([order_id, amount, merchant, account_id]):
@@ -191,5 +170,4 @@ def api_pay():
         merchant_name=merchant,
     )
 
-    status_code = 200 if result["success"] else 400
-    return jsonify(result), status_code
+    return jsonify(result), (200 if result["success"] else 400)
