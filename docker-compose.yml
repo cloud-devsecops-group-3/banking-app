@@ -1,0 +1,76 @@
+# ============================================================
+# docker-compose.yml
+# Defines and runs both services together:
+#   1. banking-app  — the Flask application
+#   2. mysql        — the MySQL 8 database
+#
+# Usage:
+#   docker compose up --build       # Start everything
+#   docker compose down             # Stop everything
+#   docker compose down -v          # Stop and delete database data
+# ============================================================
+
+version: "3.9"
+
+services:
+
+  # ── MySQL Database ──────────────────────────────────────
+  mysql:
+    image: mysql:8.0
+    container_name: banking_mysql
+    restart: unless-stopped
+
+    # Load environment variables from your .env file
+    env_file:
+      - .env
+
+    environment:
+      # These MySQL variables are read from your .env file
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+
+    ports:
+      # Expose MySQL on port 3306 so you can connect with a DB client
+      - "3306:3306"
+
+    volumes:
+      # Persist database data even when the container is stopped
+      - mysql_data:/var/lib/mysql
+
+    healthcheck:
+      # Wait until MySQL is ready before starting the app
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Banking App ─────────────────────────────────────────
+  banking-app:
+    build: .
+    container_name: banking_app
+    restart: unless-stopped
+
+    # Load environment variables from your .env file
+    env_file:
+      - .env
+
+    environment:
+      # Override DB_HOST to use the Docker service name (not localhost)
+      # Docker Compose creates an internal network where services
+      # can reach each other by their service name.
+      DB_HOST: mysql
+
+    ports:
+      # Map container port 5000 to host port 5000
+      - "5000:5000"
+
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+# ── Named Volumes ────────────────────────────────────────
+volumes:
+  mysql_data:
+    # Docker manages this volume to persist MySQL data

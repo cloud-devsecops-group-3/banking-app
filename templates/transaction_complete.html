@@ -1,0 +1,86 @@
+<!--
+  transaction_complete.html
+  PAGE 3 — Transaction Complete
+
+  Shown after a successful payment.
+  Displays the reference number, merchant, order ID, and amount.
+
+  Variables passed from routes/payment.py (via session):
+    - txn.reference : string, e.g. "TXNA3F8K2M9X"
+    - txn.order_id  : string
+    - txn.amount    : string (Decimal as string)
+    - txn.merchant  : string
+-->
+{% extends "base.html" %}
+
+{% block title %}Payment Complete — EastWest Bank{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6 col-xl-5">
+
+      <div class="ew-card shadow-sm text-center">
+
+        <!-- Animated Success Icon -->
+        <div class="ew-success-header py-5">
+          <div class="ew-success-icon mb-4">
+            <i class="bi bi-check-circle-fill"></i>
+          </div>
+          <h1 class="h3 fw-bold text-white mb-1">Transaction Complete</h1>
+          <p class="text-white-75 mb-0">Payment was processed successfully</p>
+        </div>
+
+        <div class="px-4 py-4">
+
+          <!-- Reference Number — most important detail -->
+          <div class="ew-reference-box mb-4">
+            <div class="small text-muted mb-1">Reference Number</div>
+            <div class="ew-reference-number font-monospace fw-bold">
+              {{ txn.reference }}
+            </div>
+            <div class="small text-muted mt-1">Keep this for your records</div>
+          </div>
+
+          <!-- Transaction Details -->
+          <div class="ew-details-card mb-4 text-start">
+            <div class="ew-detail-row">
+              <span class="ew-detail-label">
+                <i class="bi bi-shop me-2 text-muted"></i>Merchant
+              </span>
+              <span class="ew-detail-value fw-semibold">{{ txn.merchant }}</span>
+            </div>
+            <div class="ew-detail-row">
+              <span class="ew-detail-label">
+                <i class="bi bi-hash me-2 text-muted"></i>Order ID
+              </span>
+              <span class="ew-detail-value">#{{ txn.order_id }}</span>
+            </div>
+            <div class="ew-detail-row">
+              <span class="ew-detail-label">
+                <i class="bi bi-cash-coin me-2 text-muted"></i>Amount Paid
+              </span>
+              <span class="ew-detail-value fw-bold ew-amount">
+                {{ txn.amount | float | currency }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Done Button — goes to the dashboard -->
+          <div class="d-grid mb-3">
+            <a href="{{ url_for('dashboard.index') }}" class="btn ew-btn-primary btn-lg">
+              <i class="bi bi-house me-1"></i> Done
+            </a>
+          </div>
+
+          <small class="text-muted">
+            <i class="bi bi-info-circle me-1"></i>
+            Your account balance has been updated.
+          </small>
+
+        </div>
+      </div><!-- /ew-card -->
+    </div>
+  </div>
+</div>
+{% endblock %}

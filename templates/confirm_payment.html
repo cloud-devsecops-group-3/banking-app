@@ -1,0 +1,170 @@
+<!--
+  confirm_payment.html
+  PAGE 2 — Confirm Payment
+
+  Shows a full payment summary for the user to review.
+  Two buttons: Back (returns to account selection) and Confirm Payment.
+
+  Variables passed from routes/payment.py:
+    - account       : Account object (the selected consumer)
+    - order_id      : string
+    - amount        : Decimal
+    - merchant      : string
+    - balance_after : Decimal (balance after deduction)
+    - error         : string (optional, shown if payment failed)
+-->
+{% extends "base.html" %}
+
+{% block title %}Confirm Payment — EastWest Bank{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6 col-xl-5">
+
+      <div class="ew-card shadow-sm">
+
+        <!-- Header -->
+        <div class="ew-card-header text-center">
+          <div class="ew-bank-icon mb-3">
+            <i class="bi bi-credit-card-2-front"></i>
+          </div>
+          <h1 class="h4 fw-bold mb-1">Confirm Payment</h1>
+          <p class="text-muted small mb-0">Please review the details before confirming</p>
+        </div>
+
+        <div class="px-4 py-4">
+
+          <!-- Error Alert — only shown if payment processing failed -->
+          {% if error %}
+          <div class="alert alert-danger d-flex align-items-center gap-2 mb-4" role="alert">
+            <i class="bi bi-exclamation-triangle-fill flex-shrink-0"></i>
+            <div>{{ error }}</div>
+          </div>
+          {% endif %}
+
+          <!-- Payment Details Table -->
+          <div class="ew-details-card mb-4">
+            <div class="ew-detail-row">
+              <span class="ew-detail-label">
+                <i class="bi bi-shop me-2 text-muted"></i>Merchant
+              </span>
+              <span class="ew-detail-value fw-semibold">{{ merchant }}</span>
+            </div>
+            <div class="ew-detail-row">
+              <span class="ew-detail-label">
+                <i class="bi bi-hash me-2 text-muted"></i>Order ID
+              </span>
+              <span class="ew-detail-value">#{{ order_id }}</span>
+            </div>
+            <div class="ew-detail-row ew-detail-highlight">
+              <span class="ew-detail-label">
+                <i class="bi bi-cash-coin me-2"></i>Amount to Pay
+              </span>
+              <span class="ew-detail-value fw-bold fs-5 ew-amount">{{ amount | currency }}</span>
+            </div>
+          </div>
+
+          <!-- Account Details -->
+          <div class="ew-details-card mb-4">
+            <div class="ew-detail-row">
+              <span class="ew-detail-label">
+                <i class="bi bi-person me-2 text-muted"></i>Account Holder
+              </span>
+              <span class="ew-detail-value fw-semibold">{{ account.name }}</span>
+            </div>
+            <div class="ew-detail-row">
+              <span class="ew-detail-label">
+                <i class="bi bi-credit-card me-2 text-muted"></i>Account Number
+              </span>
+              <span class="ew-detail-value font-monospace">{{ account.masked_account_number() }}</span>
+            </div>
+            <div class="ew-detail-row">
+              <span class="ew-detail-label">
+                <i class="bi bi-wallet2 me-2 text-muted"></i>Current Balance
+              </span>
+              <span class="ew-detail-value">{{ account.balance | currency }}</span>
+            </div>
+            <div class="ew-detail-row">
+              <span class="ew-detail-label">
+                <i class="bi bi-wallet me-2 text-muted"></i>Balance After Payment
+              </span>
+              <!-- Show red text if balance after would be negative -->
+              <span class="ew-detail-value fw-semibold {% if balance_after < 0 %}text-danger{% endif %}">
+                {{ balance_after | currency }}
+              </span>
+            </div>
+          </div>
+
+          <!--
+            Two forms side by side:
+            1. Back button — links back to account selection with original params
+            2. Confirm Payment form — submits to POST /confirm-payment
+          -->
+          <div class="row g-3">
+            <!-- Back Button -->
+            <div class="col-5">
+              <a
+                href="{{ url_for('payment.select_account', order_id=order_id, amount=amount, merchant=merchant) }}"
+                class="btn ew-btn-outline w-100 btn-lg"
+              >
+                <i class="bi bi-arrow-left me-1"></i> Back
+              </a>
+            </div>
+
+            <!-- Confirm Payment Form -->
+            <div class="col-7">
+              <form method="POST" action="{{ url_for('payment.process') }}" id="confirmForm">
+                <!-- Pass all payment details as hidden fields -->
+                <input type="hidden" name="account_id" value="{{ account.id }}" />
+                <input type="hidden" name="order_id" value="{{ order_id }}" />
+                <input type="hidden" name="amount" value="{{ amount }}" />
+                <input type="hidden" name="merchant" value="{{ merchant }}" />
+
+                <button
+                  type="submit"
+                  class="btn ew-btn-primary w-100 btn-lg"
+                  id="confirmBtn"
+                  onclick="showLoading()"
+                >
+                  <span id="btnText">
+                    <i class="bi bi-lock-fill me-1"></i> Confirm Payment
+                  </span>
+                  <span id="btnSpinner" class="d-none">
+                    <span class="spinner-border spinner-border-sm me-1"></span>
+                    Processing...
+                  </span>
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <!-- Security note -->
+          <div class="text-center mt-4">
+            <small class="text-muted">
+              <i class="bi bi-shield-check me-1"></i>
+              This transaction is protected by 256-bit SSL encryption
+            </small>
+          </div>
+
+        </div><!-- /px-4 -->
+      </div><!-- /ew-card -->
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  /**
+   * showLoading()
+   * Swaps the button text for a spinner when the form is submitted.
+   * Prevents double-clicking and gives visual feedback.
+   */
+  function showLoading() {
+    document.getElementById("btnText").classList.add("d-none");
+    document.getElementById("btnSpinner").classList.remove("d-none");
+    document.getElementById("confirmBtn").disabled = true;
+  }
+</script>
+{% endblock %}

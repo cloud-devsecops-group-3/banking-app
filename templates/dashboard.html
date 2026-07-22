@@ -1,0 +1,114 @@
+<!--
+  dashboard.html
+  Read-Only Account Balance Dashboard
+
+  Displays all accounts (consumer + merchant) with their current balances.
+  No editing, adding, or deleting — purely for verification after payments.
+
+  Variables passed from routes/dashboard.py:
+    - accounts : list of all Account objects
+-->
+{% extends "base.html" %}
+
+{% block title %}Account Dashboard — EastWest Bank{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+
+  <!-- Page Header -->
+  <div class="row mb-4">
+    <div class="col">
+      <h2 class="fw-bold mb-1">Account Dashboard</h2>
+      <p class="text-muted mb-0">
+        <i class="bi bi-eye me-1"></i>
+        Read-only view of all account balances
+      </p>
+    </div>
+  </div>
+
+  <!-- ── Consumer Accounts Section ── -->
+  <div class="ew-section-label">
+    <i class="bi bi-people"></i> Consumer Accounts
+  </div>
+
+  <div class="row g-3 mb-5">
+    <!--
+      Loop through accounts and show consumers first.
+      Jinja2 if statements work like Python if statements.
+    -->
+    {% for account in accounts if account.type == "consumer" %}
+    <div class="col-12 col-md-6 col-lg-4">
+      <div class="ew-dashboard-card h-100">
+        <div class="d-flex align-items-start gap-3">
+          <!-- Avatar -->
+          <div class="ew-avatar ew-avatar-lg flex-shrink-0">
+            {{ account.name[0] }}
+          </div>
+          <div class="flex-grow-1">
+            <div class="fw-semibold fs-6">{{ account.name }}</div>
+            <div class="small text-muted font-monospace mb-2">{{ account.account_number }}</div>
+            <span class="badge ew-badge-consumer">
+              <i class="bi bi-person me-1"></i>Consumer
+            </span>
+          </div>
+        </div>
+        <!-- Balance -->
+        <div class="ew-dashboard-balance mt-3 pt-3">
+          <div class="small text-muted mb-1">Current Balance</div>
+          <div class="fw-bold fs-4 ew-amount">{{ account.balance | currency }}</div>
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div class="col">
+      <p class="text-muted">No consumer accounts found.</p>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- ── Merchant Accounts Section ── -->
+  <div class="ew-section-label">
+    <i class="bi bi-shop"></i> Merchant Accounts
+  </div>
+
+  <div class="row g-3">
+    {% for account in accounts if account.type == "merchant" %}
+    <div class="col-12 col-md-6 col-lg-4">
+      <div class="ew-dashboard-card ew-dashboard-card-merchant h-100">
+        <div class="d-flex align-items-start gap-3">
+          <!-- Avatar -->
+          <div class="ew-avatar ew-avatar-lg ew-avatar-merchant flex-shrink-0">
+            <i class="bi bi-shop"></i>
+          </div>
+          <div class="flex-grow-1">
+            <div class="fw-semibold fs-6">{{ account.name }}</div>
+            <div class="small text-muted font-monospace mb-2">{{ account.account_number }}</div>
+            <span class="badge ew-badge-merchant">
+              <i class="bi bi-shop me-1"></i>Merchant
+            </span>
+          </div>
+        </div>
+        <!-- Balance -->
+        <div class="ew-dashboard-balance mt-3 pt-3">
+          <div class="small text-muted mb-1">Current Balance</div>
+          <div class="fw-bold fs-4 ew-amount">{{ account.balance | currency }}</div>
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div class="col">
+      <p class="text-muted">No merchant accounts found.</p>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Refresh note -->
+  <div class="text-center mt-5">
+    <small class="text-muted">
+      <i class="bi bi-arrow-clockwise me-1"></i>
+      Balances update in real-time after each payment.
+    </small>
+  </div>
+
+</div>
+{% endblock %}

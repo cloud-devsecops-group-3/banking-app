@@ -1,0 +1,177 @@
+<!--
+  select_account.html
+  PAGE 1 — Account Selection
+
+  Extends base.html (inherits navbar, footer, Bootstrap).
+  Displays all consumer accounts as clickable cards.
+  The user selects one account before proceeding to payment confirmation.
+
+  Variables passed from routes/payment.py:
+    - accounts  : list of Account objects (consumers only)
+    - order_id  : string, from Ecommerce QR code
+    - amount    : string, from Ecommerce QR code
+    - merchant  : string, from Ecommerce QR code
+-->
+{% extends "base.html" %}
+
+{% block title %}Select Account — EastWest Bank{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-9 col-lg-7 col-xl-6">
+
+      <!-- ── Main Card ── -->
+      <div class="ew-card shadow-sm">
+
+        <!-- Card Header -->
+        <div class="ew-card-header text-center">
+          <div class="ew-bank-icon mb-3">
+            <i class="bi bi-bank2"></i>
+          </div>
+          <h1 class="h4 fw-bold mb-1">EastWest Bank</h1>
+          <p class="text-muted small mb-0">Choose an account to continue</p>
+        </div>
+
+        <!-- Payment Summary Banner -->
+        <div class="ew-payment-banner mx-4 mt-4 mb-2 rounded-3 p-3">
+          <div class="row text-center g-2">
+            <div class="col-4">
+              <div class="small text-muted">Merchant</div>
+              <div class="fw-semibold text-truncate">{{ merchant }}</div>
+            </div>
+            <div class="col-4">
+              <div class="small text-muted">Order ID</div>
+              <div class="fw-semibold">#{{ order_id }}</div>
+            </div>
+            <div class="col-4">
+              <div class="small text-muted">Amount</div>
+              <div class="fw-bold ew-amount">{{ amount | float | currency }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Account Cards -->
+        <div class="px-4 pb-2 mt-3">
+          <p class="text-muted small mb-3">Select a savings account</p>
+
+          <!--
+            This form submits to POST /pay.
+            Hidden inputs carry the payment details to the next page.
+          -->
+          <form method="POST" action="{{ url_for('payment.confirm_payment') }}" id="accountForm">
+            <!-- Hidden fields pass payment info to the confirm page -->
+            <input type="hidden" name="order_id" value="{{ order_id }}" />
+            <input type="hidden" name="amount" value="{{ amount }}" />
+            <input type="hidden" name="merchant" value="{{ merchant }}" />
+            <!-- This hidden input is updated by JavaScript when a card is clicked -->
+            <input type="hidden" name="account_id" id="selectedAccountId" value="" />
+
+            <div class="d-flex flex-column gap-3 mb-4">
+              <!--
+                Loop through each consumer account.
+                Jinja2 for loops work like Python for loops.
+                account.masked_account_number() calls the method defined in models.py
+              -->
+              {% for account in accounts %}
+              <div
+                class="ew-account-card"
+                data-account-id="{{ account.id }}"
+                onclick="selectAccount(this, '{{ account.id }}')"
+                role="button"
+                tabindex="0"
+              >
+                <div class="d-flex align-items-center gap-3">
+                  <!-- Avatar circle with initials -->
+                  <div class="ew-avatar">
+                    {{ account.name[0] }}
+                  </div>
+
+                  <!-- Account details -->
+                  <div class="flex-grow-1">
+                    <div class="fw-semibold">{{ account.name }}</div>
+                    <div class="small text-muted">Savings Account</div>
+                    <div class="small text-muted font-monospace">{{ account.masked_account_number() }}</div>
+                  </div>
+
+                  <!-- Balance -->
+                  <div class="text-end">
+                    <div class="small text-muted">Balance</div>
+                    <div class="fw-bold ew-balance">{{ account.balance | currency }}</div>
+                  </div>
+
+                  <!-- Selection checkmark (hidden until selected) -->
+                  <div class="ew-check ms-2">
+                    <i class="bi bi-check-circle-fill"></i>
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+
+            <!-- Continue Button — disabled until an account is selected -->
+            <div class="d-grid mb-4">
+              <button
+                type="submit"
+                class="btn ew-btn-primary btn-lg"
+                id="continueBtn"
+                disabled
+              >
+                Continue
+                <i class="bi bi-arrow-right ms-1"></i>
+              </button>
+            </div>
+
+          </form>
+        </div>
+
+        <!-- Security Footer -->
+        <div class="ew-card-footer text-center py-3">
+          <small class="text-muted">
+            <i class="bi bi-shield-lock me-1"></i>
+            256-bit SSL encrypted &mdash; Your data is secure
+          </small>
+        </div>
+
+      </div><!-- /ew-card -->
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  /**
+   * selectAccount()
+   * Called when the user clicks an account card.
+   * Highlights the selected card and enables the Continue button.
+   *
+   * @param {HTMLElement} el        - The clicked card element
+   * @param {string}      accountId - The account's database ID
+   */
+  function selectAccount(el, accountId) {
+    // Remove "selected" class from all cards
+    document.querySelectorAll(".ew-account-card").forEach(card => {
+      card.classList.remove("selected");
+    });
+
+    // Add "selected" class to the clicked card
+    el.classList.add("selected");
+
+    // Set the hidden input value so the form knows which account was chosen
+    document.getElementById("selectedAccountId").value = accountId;
+
+    // Enable the Continue button now that an account is selected
+    document.getElementById("continueBtn").disabled = false;
+  }
+
+  // Allow keyboard navigation — pressing Enter on a card selects it
+  document.querySelectorAll(".ew-account-card").forEach(card => {
+    card.addEventListener("keydown", function(e) {
+      if (e.key === "Enter" || e.key === " ") {
+        selectAccount(this, this.dataset.accountId);
+      }
+    });
+  });
+</script>
+{% endblock %}

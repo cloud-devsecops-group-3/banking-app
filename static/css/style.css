@@ -1,0 +1,579 @@
+/* ============================================================
+   style.css — EastWest Bank QR Payment App
+
+   Official EastWest Bank Brand Palette
+   ─────────────────────────────────────
+   Lust Red        : #ED1A22  (logo primary)
+   Attractive Black: #231F20  (logo secondary / text)
+   Brand Green     : #00833E  (primary UI color)
+   Brand Purple    : #6B2D8B  (secondary UI color)
+   Brand Magenta   : #C6007E  (accent / highlight)
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+/* ── Design Tokens ─────────────────────────────────────────── */
+:root {
+  /* ── Logo Colors ── */
+  --ew-lust:           #ED1A22;
+  --ew-lust-dark:      #c0141b;
+  --ew-black:          #231F20;
+
+  /* ── Primary Brand: Green ── */
+  --ew-green:          #00833E;
+  --ew-green-dark:     #006630;
+  --ew-green-deeper:   #004d23;
+  --ew-green-tint:     #f0faf4;
+  --ew-green-tint2:    #d6f0e2;
+  --ew-green-border:   #8ecfaa;
+
+  /* ── Secondary Brand: Purple ── */
+  --ew-purple:         #6B2D8B;
+  --ew-purple-dark:    #52226b;
+  --ew-purple-deeper:  #3b1850;
+  --ew-purple-tint:    #f7f0fb;
+  --ew-purple-tint2:   #ead9f4;
+
+  /* ── Accent Brand: Magenta ── */
+  --ew-magenta:        #C6007E;
+  --ew-magenta-dark:   #9e0064;
+  --ew-magenta-tint:   #fff0f8;
+  --ew-magenta-tint2:  #fad6ee;
+
+  /* ── Neutrals ── */
+  --ew-bg:             #f2f4f6;
+  --ew-surface:        #ffffff;
+  --ew-surface-2:      #f8f9fa;
+  --ew-border:         #e2e5ea;
+  --ew-border-light:   #edf0f3;
+  --ew-text:           #231F20;
+  --ew-text-secondary: #4a5568;
+  --ew-muted:          #8a94a6;
+
+  /* ── Elevation ── */
+  --shadow-xs:     0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-sm:     0 2px 8px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.05);
+  --shadow-md:     0 4px 20px rgba(0,0,0,0.09), 0 2px 6px rgba(0,0,0,0.05);
+  --shadow-green:  0 4px 16px rgba(0,131,62,0.22);
+  --shadow-purple: 0 4px 16px rgba(107,45,139,0.2);
+
+  /* ── Shape ── */
+  --radius-xl: 20px;
+  --radius-lg: 14px;
+  --radius-md: 10px;
+  --radius-sm: 7px;
+}
+
+/* ── Reset & Base ───────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: var(--ew-bg);
+  color: var(--ew-text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  -webkit-font-smoothing: antialiased;
+  font-size: 0.9375rem;
+}
+
+/* ── Main & Footer ──────────────────────────────────────────── */
+.ew-main { flex: 1; }
+
+.ew-footer {
+  background: var(--ew-surface);
+  border-top: 1px solid var(--ew-border);
+  padding: 0.9rem 0;
+}
+
+/* ============================================================
+   NAVBAR
+   Deep green base with a purple-to-magenta pinstripe accent.
+   ============================================================ */
+.ew-navbar {
+  background: linear-gradient(100deg, var(--ew-green) 0%, var(--ew-green-dark) 55%, var(--ew-green-deeper) 100%);
+  padding: 0;
+  box-shadow: 0 2px 14px rgba(0,102,48,0.35);
+  position: relative;
+}
+
+/* Purple → Magenta pinstripe at the bottom — the brand trio in one line */
+.ew-navbar::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg,
+    var(--ew-green-deeper) 0%,
+    var(--ew-purple)       35%,
+    var(--ew-magenta)      65%,
+    var(--ew-lust)         100%
+  );
+}
+
+.ew-navbar .navbar-brand {
+  padding: 0.85rem 0;
+  font-size: 1.05rem;
+  letter-spacing: -0.01em;
+}
+
+.ew-navbar .navbar-brand i {
+  font-size: 1.35rem;
+  opacity: 0.95;
+}
+
+.ew-navbar .navbar-text {
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.55;
+}
+
+/* ============================================================
+   MAIN CARD SHELL
+   ============================================================ */
+.ew-card {
+  background: var(--ew-surface);
+  border-radius: var(--ew-radius-xl);
+  border: 1px solid var(--ew-border);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+
+/* ── Card Header ── */
+.ew-card-header {
+  background: var(--ew-surface);
+  border-bottom: 1px solid var(--ew-border-light);
+  padding: 2.25rem 2rem 1.75rem;
+  position: relative;
+}
+
+/* Green → Purple → Magenta gradient bar at the top of every card */
+.ew-card-header::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: linear-gradient(90deg,
+    var(--ew-green)   0%,
+    var(--ew-purple)  50%,
+    var(--ew-magenta) 100%
+  );
+}
+
+/* ── Card Footer ── */
+.ew-card-footer {
+  background: var(--ew-surface-2);
+  border-top: 1px solid var(--ew-border-light);
+}
+
+/* ── Bank Icon Circle ── */
+.ew-bank-icon {
+  width: 60px;
+  height: 60px;
+  background: var(--ew-green-tint2);
+  border: 2px solid rgba(0,131,62,0.15);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  font-size: 1.65rem;
+  color: var(--ew-green);
+}
+
+/* ============================================================
+   PAYMENT SUMMARY BANNER  (Page 1)
+   Uses a soft green tint — green is the primary brand color.
+   ============================================================ */
+.ew-payment-banner {
+  background: linear-gradient(135deg, var(--ew-green-tint) 0%, var(--ew-green-tint2) 100%);
+  border: 1px solid rgba(0,131,62,0.15);
+}
+
+.ew-payment-banner .small.text-muted {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ew-muted) !important;
+}
+
+.ew-payment-banner .fw-semibold,
+.ew-payment-banner .fw-bold {
+  font-size: 0.9rem;
+  color: var(--ew-text);
+}
+
+/* ============================================================
+   ACCOUNT CARDS  (Page 1 — account picker)
+   Hover: green tint. Selected: green border + ring.
+   ============================================================ */
+.ew-account-card {
+  background: var(--ew-surface);
+  border: 1.5px solid var(--ew-border);
+  border-radius: var(--ew-radius-lg);
+  padding: 1rem 1.15rem;
+  cursor: pointer;
+  transition:
+    border-color 0.18s ease,
+    box-shadow   0.18s ease,
+    background   0.18s ease,
+    transform    0.12s ease;
+  position: relative;
+  user-select: none;
+}
+
+.ew-account-card:hover {
+  border-color: rgba(0,131,62,0.4);
+  box-shadow: 0 3px 14px rgba(0,131,62,0.1);
+  transform: translateY(-1px);
+}
+
+.ew-account-card:active {
+  transform: translateY(0);
+}
+
+/* Selected: green border + subtle green glow ring */
+.ew-account-card.selected {
+  border-color: var(--ew-green);
+  background: var(--ew-green-tint);
+  box-shadow: 0 0 0 3px rgba(0,131,62,0.12), var(--shadow-sm);
+}
+
+/* Checkmark — grey at rest, green when selected */
+.ew-check {
+  color: var(--ew-border);
+  font-size: 1.25rem;
+  transition: color 0.18s ease, transform 0.18s ease;
+  flex-shrink: 0;
+}
+
+.ew-account-card.selected .ew-check {
+  color: var(--ew-green);
+  transform: scale(1.1);
+}
+
+/* ============================================================
+   AVATAR CIRCLES
+   Consumer: green gradient. Merchant: purple gradient.
+   ============================================================ */
+.ew-avatar {
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(140deg, var(--ew-green) 0%, var(--ew-green-dark) 100%);
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.05rem;
+  flex-shrink: 0;
+  letter-spacing: -0.02em;
+}
+
+.ew-avatar-lg {
+  width: 52px;
+  height: 52px;
+  font-size: 1.25rem;
+}
+
+/* Merchant avatar: purple */
+.ew-avatar-merchant {
+  background: linear-gradient(140deg, var(--ew-purple) 0%, var(--ew-purple-dark) 100%);
+}
+
+/* ============================================================
+   DETAIL ROWS  (confirm + complete pages)
+   ============================================================ */
+.ew-details-card {
+  background: var(--ew-surface-2);
+  border: 1px solid var(--ew-border);
+  border-radius: var(--ew-radius-lg);
+  overflow: hidden;
+}
+
+.ew-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.8rem 1.1rem;
+  border-bottom: 1px solid var(--ew-border-light);
+  gap: 1rem;
+}
+
+.ew-detail-row:last-child {
+  border-bottom: none;
+}
+
+/* Amount row: magenta tint — draws the eye to the most important number */
+.ew-detail-highlight {
+  background: var(--ew-magenta-tint);
+}
+
+.ew-detail-label {
+  color: var(--ew-text-secondary);
+  font-size: 0.845rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.ew-detail-value {
+  font-size: 0.875rem;
+  text-align: right;
+  color: var(--ew-text);
+  word-break: break-word;
+}
+
+/* ============================================================
+   BUTTONS
+   Primary: green (main brand action).
+   Outline: neutral ghost.
+   ============================================================ */
+.ew-btn-primary {
+  background: linear-gradient(135deg, var(--ew-green) 0%, var(--ew-green-dark) 100%);
+  border: none;
+  color: #fff;
+  border-radius: var(--ew-radius-md);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  letter-spacing: 0.01em;
+  box-shadow: var(--shadow-green);
+  transition: opacity 0.15s ease, transform 0.12s ease, box-shadow 0.15s ease;
+}
+
+.ew-btn-primary:hover:not(:disabled) {
+  opacity: 0.91;
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0,131,62,0.3);
+}
+
+.ew-btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: var(--shadow-green);
+}
+
+.ew-btn-primary:disabled {
+  background: #c8cdd6;
+  box-shadow: none;
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+.ew-btn-outline {
+  border: 1.5px solid var(--ew-border);
+  color: var(--ew-text-secondary);
+  border-radius: var(--ew-radius-md);
+  font-weight: 500;
+  font-size: 0.9375rem;
+  background: var(--ew-surface);
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.ew-btn-outline:hover {
+  border-color: #b0b8c8;
+  color: var(--ew-text);
+  background: var(--ew-surface-2);
+}
+
+/* ============================================================
+   TYPOGRAPHY HELPERS
+   ============================================================ */
+
+/* Magenta for payment amounts — the most attention-grabbing brand color */
+.ew-amount {
+  color: var(--ew-magenta);
+}
+
+/* Green for account balances — positive, financial */
+.ew-balance {
+  color: var(--ew-green);
+  font-size: 0.875rem;
+}
+
+/* ============================================================
+   TRANSACTION COMPLETE PAGE
+   Success header: deep green gradient (brand green).
+   ============================================================ */
+.ew-success-header {
+  background: linear-gradient(140deg, var(--ew-green) 0%, var(--ew-green-deeper) 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Radial glow behind the checkmark */
+.ew-success-header::before {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 220px;
+  height: 220px;
+  background: radial-gradient(circle, rgba(255,255,255,0.09) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.ew-success-icon {
+  font-size: 5.5rem;
+  color: #fff;
+  display: block;
+  animation: popIn 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+  position: relative;
+}
+
+@keyframes popIn {
+  0%   { transform: scale(0.2); opacity: 0; }
+  65%  { transform: scale(1.12); }
+  100% { transform: scale(1);   opacity: 1; }
+}
+
+.text-white-75 { color: rgba(255,255,255,0.72); }
+
+/* Reference number box: green dashed border on green tint */
+.ew-reference-box {
+  background: var(--ew-green-tint);
+  border: 1.5px dashed var(--ew-green-border);
+  border-radius: var(--ew-radius-lg);
+  padding: 1.35rem 1.5rem;
+}
+
+.ew-reference-number {
+  font-size: 1.45rem;
+  color: var(--ew-green);
+  letter-spacing: 0.1em;
+  line-height: 1.2;
+}
+
+/* ============================================================
+   DASHBOARD PAGE
+   Consumer cards: green left-border.
+   Merchant cards: purple left-border.
+   ============================================================ */
+.ew-section-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ew-muted);
+  margin-bottom: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.ew-section-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--ew-border);
+}
+
+.ew-dashboard-card {
+  background: var(--ew-surface);
+  border: 1px solid var(--ew-border);
+  border-radius: var(--ew-radius-lg);
+  padding: 1.35rem;
+  box-shadow: var(--shadow-xs);
+  transition: box-shadow 0.2s ease, transform 0.15s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.ew-dashboard-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+/* Consumer card: green left-border */
+.ew-dashboard-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; bottom: 0;
+  width: 4px;
+  background: linear-gradient(180deg, var(--ew-green) 0%, var(--ew-green-dark) 100%);
+  border-radius: var(--ew-radius-lg) 0 0 var(--ew-radius-lg);
+}
+
+/* Merchant card: purple left-border */
+.ew-dashboard-card-merchant::before {
+  background: linear-gradient(180deg, var(--ew-purple) 0%, var(--ew-purple-dark) 100%);
+}
+
+.ew-dashboard-balance {
+  border-top: 1px solid var(--ew-border-light);
+  padding-top: 0.85rem;
+  margin-top: 0.85rem;
+}
+
+/* Consumer badge: green */
+.ew-badge-consumer {
+  background: var(--ew-green-tint2);
+  color: var(--ew-green-dark);
+  font-weight: 600;
+  font-size: 0.7rem;
+  letter-spacing: 0.03em;
+  padding: 0.28em 0.65em;
+  border-radius: 20px;
+}
+
+/* Merchant badge: purple */
+.ew-badge-merchant {
+  background: var(--ew-purple-tint2);
+  color: var(--ew-purple-dark);
+  font-weight: 600;
+  font-size: 0.7rem;
+  letter-spacing: 0.03em;
+  padding: 0.28em 0.65em;
+  border-radius: 20px;
+}
+
+/* ============================================================
+   ALERT OVERRIDES  (error messages on confirm page)
+   Uses lust red — reserved for errors/warnings only.
+   ============================================================ */
+.alert-danger {
+  background: #fff5f5;
+  border-color: rgba(237,26,34,0.2);
+  color: var(--ew-lust-dark);
+  border-radius: var(--ew-radius-md);
+  font-size: 0.875rem;
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 576px) {
+  .ew-card-header {
+    padding: 1.75rem 1.25rem 1.35rem;
+  }
+
+  .ew-detail-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.15rem;
+    padding: 0.7rem 1rem;
+  }
+
+  .ew-detail-value {
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+
+  .ew-reference-number {
+    font-size: 1.15rem;
+    letter-spacing: 0.06em;
+  }
+
+  .ew-success-icon {
+    font-size: 4.5rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .ew-payment-banner .row > div {
+    padding: 0.25rem 0;
+  }
+}
