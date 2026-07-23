@@ -7,10 +7,11 @@
   The user selects one account before proceeding to payment confirmation.
 
   Variables passed from routes/payment.py:
-    - accounts  : list of Account objects (consumers only)
-    - order_id  : string, from Ecommerce QR code
-    - amount    : string, from Ecommerce QR code
-    - merchant  : string, from Ecommerce QR code
+    - accounts       : list of Account objects (consumers only)
+    - transaction_id : string, identifies the PaymentRequest row (source
+                        of truth for amount/merchant - looked up server-side,
+                        never trusted from this page)
+    - order_id, amount, merchant : DISPLAY ONLY, read from that same row
 -->
 {% extends "base.html" %}
 
@@ -59,12 +60,9 @@
             This form submits to POST /pay.
             Hidden inputs carry the payment details to the next page.
           -->
-          <form method="POST" action="{{ url_for('payment.confirm_payment') }}" id="accountForm">
-            <!-- Hidden fields pass payment info to the confirm page -->
-            <input type="hidden" name="order_id" value="{{ order_id }}" />
-            <input type="hidden" name="amount" value="{{ amount }}" />
-            <input type="hidden" name="merchant" value="{{ merchant }}" />
-            <!-- This hidden input is updated by JavaScript when a card is clicked -->
+          <form method="POST" action="{{ url_for('payment.confirm_payment', transaction_id=transaction_id) }}" id="accountForm">
+            <!-- Only the chosen account travels forward. Amount and
+                 merchant are re-read server-side from transaction_id. -->
             <input type="hidden" name="account_id" id="selectedAccountId" value="" />
 
             <div class="d-flex flex-column gap-3 mb-4">

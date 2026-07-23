@@ -1,24 +1,21 @@
 # ============================================================
 # routes/dashboard.py
-# Read-only account balance dashboard.
-#
-# FRONTEND PREVIEW MODE
-# ---------------------
-# get_all_accounts() returns mock data — no DB needed.
-# TODO (backend): no changes needed here once helpers.py is updated.
+# Read-only account balance dashboard - admin only.
 # ============================================================
 
-from flask import Blueprint, render_template
-from utils.helpers import get_all_accounts
+from flask import Blueprint, render_template, session
 
-# TODO (backend): no extra imports needed
+from utils.auth import dashboard_required
+from utils.helpers import get_account_by_id, get_all_accounts
 
 dashboard_bp = Blueprint("dashboard", __name__)
 
 
 @dashboard_bp.route("/")
 @dashboard_bp.route("/dashboard")
+@dashboard_required
 def index():
-    """Displays all accounts with current balances. Read-only."""
-    accounts = get_all_accounts()
-    return render_template("dashboard.html", accounts=accounts)
+    """Displays all balances to admins and only the owner's balance to consumers."""
+    is_admin = bool(session.get("is_admin"))
+    accounts = get_all_accounts() if is_admin else [get_account_by_id(session["account_id"])]
+    return render_template("dashboard.html", accounts=accounts, is_admin=is_admin)
