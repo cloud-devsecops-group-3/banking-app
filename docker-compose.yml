@@ -16,39 +16,39 @@ services:
 
   # ── MySQL Database ──────────────────────────────────────
 depends_on:
-  mysql:
-    condition: service_healthy
+  # mysql:
+  #   condition: service_healthy
 
-    # Load environment variables from your .env file
-    env_file:
-      - .env
+  #   # Load environment variables from your .env file
+  #   env_file:
+  #     - .env
 
-    environment:
-      # These MySQL variables are read from your .env file
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
-      MYSQL_DATABASE: ${DB_NAME}
-      MYSQL_USER: ${DB_USER}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
+  #   environment:
+  #     # These MySQL variables are read from your .env file
+  #     MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+  #     MYSQL_DATABASE: ${DB_NAME}
+  #     MYSQL_USER: ${DB_USER}
+  #     MYSQL_PASSWORD: ${DB_PASSWORD}
 
-    # ── MySQL, dev-only convenience ──
-    # Exposed on the host so you can connect a DB client while developing
-    # standalone. Once this merges into the shared Dev VM's compose file
-    # alongside the ecommerce app, drop this "ports" block entirely -
-    # port 3306 must never be reachable outside the VM (see Dev VM guide:
-    # "3306/8080 - NEVER open publicly"). Use an SSH tunnel instead.
-    ports:
-      - "3306:3306"
+  #   # ── MySQL, dev-only convenience ──
+  #   # Exposed on the host so you can connect a DB client while developing
+  #   # standalone. Once this merges into the shared Dev VM's compose file
+  #   # alongside the ecommerce app, drop this "ports" block entirely -
+  #   # port 3306 must never be reachable outside the VM (see Dev VM guide:
+  #   # "3306/8080 - NEVER open publicly"). Use an SSH tunnel instead.
+  #   ports:
+  #     - "3306:3306"
 
-    volumes:
-      # Persist database data even when the container is stopped
-      - mysql_data:/var/lib/mysql
+  #   volumes:
+  #     # Persist database data even when the container is stopped
+  #     - mysql_data:/var/lib/mysql
 
-    healthcheck:
-      # Wait until MySQL is ready before starting the app
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+  #   healthcheck:
+  #     # Wait until MySQL is ready before starting the app
+  #     test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD}"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
 
   # ── Banking App ─────────────────────────────────────────
   banking-app:
