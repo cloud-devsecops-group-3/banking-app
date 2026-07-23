@@ -31,8 +31,13 @@ services:
       MYSQL_USER: ${DB_USER}
       MYSQL_PASSWORD: ${DB_PASSWORD}
 
+    # ── MySQL, dev-only convenience ──
+    # Exposed on the host so you can connect a DB client while developing
+    # standalone. Once this merges into the shared Dev VM's compose file
+    # alongside the ecommerce app, drop this "ports" block entirely -
+    # port 3306 must never be reachable outside the VM (see Dev VM guide:
+    # "3306/8080 - NEVER open publicly"). Use an SSH tunnel instead.
     ports:
-      # Expose MySQL on port 3306 so you can connect with a DB client
       - "3306:3306"
 
     volumes:
@@ -63,8 +68,8 @@ services:
       DB_HOST: mysql
 
     ports:
-      # Map container port 5000 to host port 5000
-      - "5000:5000"
+      # Map container port 5001 to host port 5001
+      - "5001:5001"
 
     depends_on:
       mysql:

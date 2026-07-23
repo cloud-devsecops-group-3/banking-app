@@ -30,6 +30,36 @@ class Account(db.Model):
         return f"<Account {self.name}>"
 
 
+class PaymentRequest(db.Model):
+    """Represents the `payment_requests` table.
+
+    Created by POST /api/payment-requests when the ecommerce app checks
+    out. This is the SINGLE source of truth for amount and merchant_account
+    from that point forward - every later step (account selection, confirm,
+    settlement) looks the row up by transaction_id and reads amount/merchant
+    from here, never from a URL query string or a hidden form field. That's
+    what makes the payment tamper-proof: nothing the browser sends can
+    change how much money moves.
+    """
+
+    __tablename__ = "payment_requests"
+
+    id = db.Column(db.Integer, primary_key=True)
+    # Public identifier - this is what's in the QR/pay URL. Never expose
+    # the internal integer `id` externally.
+    transaction_id = db.Column(db.String(40), unique=True, nullable=False)
+    order_id = db.Column(db.String(50), nullable=False)
+    amount = db.Column(db.Numeric(15, 2), nullable=False)
+    merchant_account = db.Column(db.String(100), nullable=False)
+    callback_url = db.Column(db.String(255), nullable=False)
+    return_url = db.Column(db.String(255))
+    status = db.Column(db.String(20), nullable=False, default="PENDING")  # PENDING/PAID/FAILED
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f"<PaymentRequest {self.transaction_id} {self.status}>"
+
+
 class Transaction(db.Model):
     """Represents the `transactions` table. Records every completed payment."""
 

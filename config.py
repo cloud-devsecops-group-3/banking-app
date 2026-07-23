@@ -28,6 +28,7 @@ class Config:
     SQLALCHEMY_DATABASE_URI = (
         f"mysql+pymysql://{_DB_USER}:{_DB_PASSWORD}@{_DB_HOST}:{_DB_PORT}/{_DB_NAME}"
     )
+    # SQLALCHEMY_DATABASE_URI = "sqlite:///bank.db"
 
     # Disable SQLAlchemy event notifications to save memory
     SQLALCHEMY_TRACK_MODIFICATIONS = False

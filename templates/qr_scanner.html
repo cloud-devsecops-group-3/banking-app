@@ -84,7 +84,7 @@
             </p>
             <div class="input-group">
               <input type="text" id="manualUrl" class="form-control qr-input"
-                placeholder="http://127.0.0.1:5000/pay?order_id=1001&amount=450&merchant=pageturn-books" />
+                placeholder="http://127.0.0.1:5001/pay/txn-a1b2c3d4e5f6g7h8" />
               <button class="btn ew-btn-primary px-3" onclick="openManualUrl()">
                 <i class="bi bi-arrow-right"></i>
               </button>
@@ -184,7 +184,7 @@
     detectedBox.classList.remove('d-none');
 
     /* Only redirect if it looks like a valid payment URL */
-    if (url.includes('/pay?')) {
+    if (url.includes('/pay/')) {
       setStatus('success', 'Redirecting to payment…');
       setTimeout(function() {
         window.location.href = url;
@@ -215,10 +215,10 @@
   function openManualUrl() {
     var url = document.getElementById('manualUrl').value.trim();
     if (!url) { alert('Please paste a payment URL.'); return; }
-    if (url.includes('/pay?')) {
+    if (url.includes('/pay/')) {
       window.location.href = url;
     } else {
-      alert('That does not look like a valid payment URL.\nIt should contain /pay?order_id=...');
+      alert('That does not look like a valid payment URL.\nIt should look like /pay/txn-...');
     }
   }
 

@@ -1,30 +1,23 @@
 # ============================================================
 # app.py
 # Main entry point of the Flask application.
-#
-# FRONTEND PREVIEW MODE
-# ---------------------
-# Database initialization is commented out.
-# The app runs with static mock data — no MySQL needed.
-# To re-enable the database later, uncomment the marked lines.
 # ============================================================
+
+import os
 
 from flask import Flask
 
-# TODO (backend): uncomment these when database is ready
-# from config import Config
-# from database import db
+from config import Config
+from database import db
 
 
-def create_app():
+def create_app(config_overrides: dict | None = None) -> Flask:
     app = Flask(__name__)
+    app.config.from_object(Config)
+    if config_overrides:
+        app.config.update(config_overrides)
 
-    # TODO (backend): load config and init DB when ready
-    # app.config.from_object(Config)
-    # db.init_app(app)
-
-    # Secret key is still needed for Flask sessions (used on complete page)
-    app.secret_key = "frontend-preview-secret-key"
+    db.init_app(app)
 
     # --------------------------------------------------------
     # Register Blueprints (route files)
@@ -49,10 +42,16 @@ def create_app():
 
     app.jinja_env.filters["currency"] = format_currency
 
+    with app.app_context():
+        db.create_all()
+        from seed import seed_accounts
+
+        seed_accounts()
+
     return app
 
 
 app = create_app()
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5001)), debug=True)

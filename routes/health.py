@@ -16,4 +16,4 @@ health_bp = Blueprint("health", __name__)
 @health_bp.route("/health")
 def health_check():
     """Returns a simple JSON response confirming the app is running."""
-    return jsonify({"status": "UP"}), 200
+    return jsonify({"status": "ok"}), 200

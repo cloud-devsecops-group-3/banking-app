@@ -7,9 +7,10 @@
 
   Variables passed from routes/payment.py:
     - account       : Account object (the selected consumer)
-    - order_id      : string
-    - amount        : Decimal
-    - merchant      : string
+    - transaction_id: string, identifies the PaymentRequest row
+    - order_id      : string, DISPLAY ONLY
+    - amount        : Decimal, DISPLAY ONLY
+    - merchant      : string, DISPLAY ONLY
     - balance_after : Decimal (balance after deduction)
     - error         : string (optional, shown if payment failed)
 -->
@@ -105,7 +106,7 @@
             <!-- Back Button -->
             <div class="col-5">
               <a
-                href="{{ url_for('payment.select_account', order_id=order_id, amount=amount, merchant=merchant) }}"
+                href="{{ url_for('payment.select_account', transaction_id=transaction_id) }}"
                 class="btn ew-btn-outline w-100 btn-lg"
               >
                 <i class="bi bi-arrow-left me-1"></i> Back
@@ -114,12 +115,9 @@
 
             <!-- Confirm Payment Form -->
             <div class="col-7">
-              <form method="POST" action="{{ url_for('payment.process') }}" id="confirmForm">
-                <!-- Pass all payment details as hidden fields -->
+              <form method="POST" action="{{ url_for('payment.process', transaction_id=transaction_id) }}" id="confirmForm">
+                <!-- Only the chosen account needs to travel forward. -->
                 <input type="hidden" name="account_id" value="{{ account.id }}" />
-                <input type="hidden" name="order_id" value="{{ order_id }}" />
-                <input type="hidden" name="amount" value="{{ amount }}" />
-                <input type="hidden" name="merchant" value="{{ merchant }}" />
 
                 <button
                   type="submit"

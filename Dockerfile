@@ -2,11 +2,8 @@
 # Dockerfile
 # Builds the Docker image for the Banking App.
 #
-# Docker packages the app and all its dependencies into a
-# portable container that runs the same everywhere.
-#
 # Build:  docker build -t banking-app .
-# Run:    docker run -p 5000:5000 banking-app
+# Run:    docker run -p 5001:5001 banking-app
 # ============================================================
 
 # Use the official slim Python 3.11 image as the base.
@@ -38,12 +35,12 @@ RUN chown -R appuser:appgroup /app
 # Switch to the non-root user
 USER appuser
 
-# Expose port 5000 so Docker knows the app listens on this port
-EXPOSE 5000
+# Expose port 5001 so Docker knows the app listens on this port
+EXPOSE 5001
 
 # ── Start the app with Gunicorn ──
 # Gunicorn is a production-grade WSGI server (better than Flask's built-in server).
 # "app:app" means: from app.py, use the variable named `app`.
 # --workers 2 : run 2 worker processes to handle concurrent requests
-# --bind 0.0.0.0:5000 : listen on all network interfaces on port 5000
-CMD ["gunicorn", "--workers", "2", "--bind", "0.0.0.0:5000", "app:app"]
+# --bind 0.0.0.0:5001 : listen on all network interfaces on port 5001
+CMD ["gunicorn", "--workers", "2", "--bind", "0.0.0.0:5001", "app:app"]

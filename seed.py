@@ -1,19 +1,17 @@
 # ============================================================
 # seed.py
-# Creates database tables and inserts demo accounts.
+# Inserts demo accounts. Called automatically by app.py at startup
+# (inside its own app_context), so this never needs to be run by hand -
+# same idempotent-seeding rule the ecommerce app follows.
 #
-# This script is IDEMPOTENT — running it multiple times will
-# never create duplicate records. It checks before inserting.
-#
-# How to run:
+# Can still be run directly for convenience:
 #   python seed.py
 #
 # What it does:
-#   1. Creates all tables defined in models.py (if they don't exist)
-#   2. Inserts demo consumer and merchant accounts (if they don't exist)
+#   Inserts demo consumer and merchant accounts (if they don't exist).
+#   Table creation is handled by db.create_all() in app.py, not here.
 # ============================================================
 
-from app import create_app
 from database import db
 from models import Account
 
@@ -28,41 +26,35 @@ DEMO_ACCOUNTS = [
 ]
 
 
-def seed():
+def seed_accounts():
     """
-    Creates tables and inserts demo accounts.
-    Skips any account whose account_number already exists in the database.
+    Inserts demo accounts. Skips any account whose account_number already
+    exists. Must be called from inside an active app_context.
     """
-    app = create_app()
+    inserted = 0
+    for data in DEMO_ACCOUNTS:
+        exists = Account.query.filter_by(account_number=data["account_number"]).first()
+        if not exists:
+            account = Account(
+                name=data["name"],
+                account_number=data["account_number"],
+                type=data["type"],
+                balance=data["balance"],
+            )
+            db.session.add(account)
+            inserted += 1
+            print(f"  + Inserted: {data['name']} ({data['account_number']})")
+        else:
+            print(f"  - Skipped (already exists): {data['name']} ({data['account_number']})")
 
-    with app.app_context():
-        # Create all tables defined in models.py.
-        # db.create_all() is safe to run multiple times — it skips existing tables.
-        print("Creating tables...")
-        db.create_all()
-        print("Tables ready.")
-
-        # Insert each demo account only if it doesn't already exist
-        inserted = 0
-        for data in DEMO_ACCOUNTS:
-            exists = Account.query.filter_by(account_number=data["account_number"]).first()
-            if not exists:
-                account = Account(
-                    name=data["name"],
-                    account_number=data["account_number"],
-                    type=data["type"],
-                    balance=data["balance"],
-                )
-                db.session.add(account)
-                inserted += 1
-                print(f"  + Inserted: {data['name']} ({data['account_number']})")
-            else:
-                print(f"  - Skipped (already exists): {data['name']} ({data['account_number']})")
-
-        # Commit all new inserts at once
-        db.session.commit()
-        print(f"\nSeed complete. {inserted} account(s) inserted.")
+    db.session.commit()
+    print(f"Seed complete. {inserted} account(s) inserted.")
 
 
 if __name__ == "__main__":
-    seed()
+    # Standalone run: needs its own app context since app.py isn't driving it.
+    from app import create_app
+
+    app = create_app()
+    with app.app_context():
+        seed_accounts()

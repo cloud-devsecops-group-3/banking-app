@@ -66,16 +66,27 @@
             </div>
           </div>
 
-          <!-- Done Button — goes to the dashboard -->
+          <!-- Done Button — goes back to the store if we know where that
+               is, otherwise falls back to this app's own dashboard -->
           <div class="d-grid mb-3">
-            <a href="{{ url_for('dashboard.index') }}" class="btn ew-btn-primary btn-lg">
-              <i class="bi bi-house me-1"></i> Done
-            </a>
+            {% if txn.return_url %}
+              <a href="{{ txn.return_url }}" class="btn ew-btn-primary btn-lg" id="returnBtn">
+                <i class="bi bi-shop me-1"></i> Return to Store
+              </a>
+            {% else %}
+              <a href="{{ url_for('dashboard.index') }}" class="btn ew-btn-primary btn-lg">
+                <i class="bi bi-house me-1"></i> Done
+              </a>
+            {% endif %}
           </div>
 
           <small class="text-muted">
             <i class="bi bi-info-circle me-1"></i>
-            Your account balance has been updated.
+            {% if txn.return_url %}
+              Your account balance has been updated. Redirecting to the store in <span id="ewCountdown">10</span>s&hellip;
+            {% else %}
+              Your account balance has been updated.
+            {% endif %}
           </small>
 
         </div>
@@ -83,4 +94,23 @@
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+{% if txn.return_url %}
+<script>
+  (function () {
+    var n = 10;
+    var el = document.getElementById('ewCountdown');
+    var timer = setInterval(function () {
+      n -= 1;
+      if (el) el.textContent = n;
+      if (n <= 0) {
+        clearInterval(timer);
+        window.location.href = {{ txn.return_url | tojson }};
+      }
+    }, 1000);
+  })();
+</script>
+{% endif %}
 {% endblock %}
