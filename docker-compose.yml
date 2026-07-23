@@ -60,11 +60,11 @@ depends_on:
     env_file:
       - .env
 
-    environment:
-      # Override DB_HOST to use the Docker service name (not localhost)
-      # Docker Compose creates an internal network where services
-      # can reach each other by their service name.
-      DB_HOST: ${DB_HOST}
+    # environment:
+    #   # Override DB_HOST to use the Docker service name (not localhost)
+    #   # Docker Compose creates an internal network where services
+    #   # can reach each other by their service name.
+    #   DB_HOST: ${DB_HOST}
 
     ports:
       # Map container port 5001 to host port 5001
