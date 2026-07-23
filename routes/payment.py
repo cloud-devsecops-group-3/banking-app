@@ -147,6 +147,30 @@ def complete():
 # TODO (backend): process_payment() will do real DB writes once enabled
 # ============================================================
 
+@payment_bp.route("/qr")
+def qr_page():
+    """
+    QR Generator page — simulates the Merchant App side.
+    Displays a form to enter order_id, amount, merchant.
+    On submit, generates a real scannable QR code entirely in the browser
+    using qrcode.js (no backend needed).
+    The QR encodes the full payment URL:
+      http://127.0.0.1:5000/pay?order_id=...&amount=...&merchant=...
+    """
+    return render_template("qr.html")
+
+
+@payment_bp.route("/qr-scanner")
+def qr_scanner():
+    """
+    QR Scanner page — simulates the Customer Bank App side.
+    Uses the device camera (via jsQR library) to scan a QR code.
+    When a valid payment QR is detected, it automatically redirects
+    to /pay?order_id=...&amount=...&merchant=...
+    """
+    return render_template("qr_scanner.html")
+
+
 @payment_bp.route("/api/pay", methods=["POST"])
 def api_pay():
     """JSON API endpoint for programmatic payment triggering."""
