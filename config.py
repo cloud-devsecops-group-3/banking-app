@@ -1,43 +1,36 @@
 # ============================================================
 # config.py
-# Application Configuration
-# --------------------------
-# Loads all settings from environment variables (via .env).
-# Builds the SQLAlchemy connection URI from individual DB_* vars.
+# Loads all configuration from environment variables.
+# Flask reads this class to configure the application.
 # ============================================================
 
 import os
 from dotenv import load_dotenv
 
+# Load the local .env file into environment variables when present.
 load_dotenv()
 
 
 class Config:
-    # ── Flask ────────────────────────────────────────────────
-    SECRET_KEY = os.getenv("SECRET_KEY", "change-me-in-production")
-    FLASK_ENV  = os.getenv("FLASK_ENV", "development")
-    DEBUG      = FLASK_ENV == "development"
+    """Central configuration class. Flask reads these attributes to configure itself."""
 
-    # ── MySQL connection ──────────────────────────────────────
-    _DB_HOST     = os.getenv("DB_HOST",     "10.0.2.112")
-    _DB_PORT     = os.getenv("DB_PORT",     "3306")
-    _DB_NAME     = os.getenv("DB_NAME",     "bankdb")
-    _DB_USER     = os.getenv("DB_USER",     "bankuser")
-    _DB_PASSWORD = os.getenv("DB_PASSWORD", "devpass")
+    # Secret key signs session cookies. Set a strong random value in production.
+    SECRET_KEY = os.getenv("SECRET_KEY", "fallback-dev-key")
 
-    # mysql+pymysql://user:password@host:port/database
-    SQLALCHEMY_DATABASE_URI = (
-        f"mysql+pymysql://{_DB_USER}:{_DB_PASSWORD}"
-        f"@{_DB_HOST}:{_DB_PORT}/{_DB_NAME}"
-    )
+    # Use SQLite for local runs until DB_HOST is configured. Docker Compose
+    # supplies DB_HOST=mysql, which keeps the container setup on MySQL.
+    _DB_HOST = os.getenv("DB_HOST")
+    _DB_PORT = os.getenv("DB_PORT", "3306")
+    _DB_NAME = os.getenv("DB_NAME", "banking_db")
+    _DB_USER = os.getenv("DB_USER", "root")
+    _DB_PASSWORD = os.getenv("DB_PASSWORD", "")
 
-    # Disable SQLAlchemy modification tracking (saves memory)
+    if _DB_HOST:
+        SQLALCHEMY_DATABASE_URI = (
+            f"mysql+pymysql://{_DB_USER}:{_DB_PASSWORD}@{_DB_HOST}:{_DB_PORT}/{_DB_NAME}"
+        )
+    else:
+        SQLALCHEMY_DATABASE_URI = "sqlite:///banking.db"
+
+    # Disable SQLAlchemy event notifications to save memory
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-
-    # Keep connections alive across requests to the remote VM
-    # (avoids "MySQL server has gone away" on idle connections)
-    SQLALCHEMY_ENGINE_OPTIONS = {
-        "pool_pre_ping"  : True,   # test connection before using it
-        "pool_recycle"   : 280,    # recycle connections every 280 s
-        "connect_args"   : {"connect_timeout": 10},
-    }
