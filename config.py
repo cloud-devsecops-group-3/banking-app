@@ -1,36 +1,33 @@
-# ============================================================
 # config.py
-# Loads all configuration from environment variables.
-# Flask reads this class to configure the application.
-# ============================================================
+# Loads all configuration from environment variables (.env).
 
 import os
 from dotenv import load_dotenv
 
-# Load the local .env file into environment variables when present.
 load_dotenv()
 
 
 class Config:
-    """Central configuration class. Flask reads these attributes to configure itself."""
-
-    # Secret key signs session cookies. Set a strong random value in production.
     SECRET_KEY = os.getenv("SECRET_KEY", "fallback-dev-key")
 
-    # Use SQLite for local runs until DB_HOST is configured. Docker Compose
-    # supplies DB_HOST=mysql, which keeps the container setup on MySQL.
-    _DB_HOST = os.getenv("DB_HOST")
-    _DB_PORT = os.getenv("DB_PORT", "3306")
-    _DB_NAME = os.getenv("DB_NAME", "banking_db")
-    _DB_USER = os.getenv("DB_USER", "root")
-    _DB_PASSWORD = os.getenv("DB_PASSWORD", "")
+    _DB_HOST     = os.getenv("DB_HOST",     "10.0.1.80")
+    _DB_PORT     = os.getenv("DB_PORT",     "3306")
+    _DB_NAME     = os.getenv("DB_NAME",     "bankdb")
+    _DB_USER     = os.getenv("DB_USER",     "bankuser")
+    _DB_PASSWORD = os.getenv("DB_PASSWORD", "devpass")
 
-    if _DB_HOST:
-        SQLALCHEMY_DATABASE_URI = (
-            f"mysql+pymysql://{_DB_USER}:{_DB_PASSWORD}@{_DB_HOST}:{_DB_PORT}/{_DB_NAME}"
-        )
-    else:
-        SQLALCHEMY_DATABASE_URI = "sqlite:///banking.db"
+    SQLALCHEMY_DATABASE_URI = (
+        f"mysql+pymysql://{_DB_USER}:{_DB_PASSWORD}"
+        f"@{_DB_HOST}:{_DB_PORT}/{_DB_NAME}"
+    )
 
-    # Disable SQLAlchemy event notifications to save memory
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+    # pool_pre_ping  : test connection before each use (prevents "gone away" errors)
+    # pool_recycle   : recycle connections every 280 s
+    # connect_timeout: fail fast if the DB host is unreachable
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        "pool_pre_ping": True,
+        "pool_recycle" : 280,
+        "connect_args" : {"connect_timeout": 10},
+    }
