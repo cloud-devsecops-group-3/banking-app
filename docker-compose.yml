@@ -15,7 +15,7 @@ version: "3.9"
 services:
 
   # ── MySQL Database ──────────────────────────────────────
-depends_on:
+# depends_on:
   # mysql:
   #   condition: service_healthy
 
@@ -70,9 +70,9 @@ depends_on:
       # Map container port 5001 to host port 5001
       - "5001:5001"
 
-    depends_on:
-      mysql:
-        condition: service_healthy
+    # depends_on:
+    #   mysql:
+    #     condition: service_healthy
 
 # ── Named Volumes ────────────────────────────────────────
 volumes:
