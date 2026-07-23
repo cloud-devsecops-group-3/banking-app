@@ -104,3 +104,5 @@ database.db
 
 # Ignore generated images/cache
 static/images/uploads/
+
+routes/
