@@ -1,81 +1,81 @@
 # ============================================================
 # utils/helpers.py
 #
-# Real database-backed versions of the account/payment helpers.
-# (Frontend-preview mock data has been removed now that the DB is wired up.)
+# Application Helpers — Service Layer Facade
+# -------------------------------------------
+# The ONLY module that routes import for data access.
+# Delegates all database operations to mysql/services/.
+#
+# CURRENT BACKEND: MySQL + SQLAlchemy
+#
+# To switch back to Firestore:
+#   Replace the mysql.services imports below with the
+#   equivalent firebase.services imports — nothing else changes.
+#
+# Public API (called by routes):
+#   generate_reference_number()
+#   get_consumer_accounts()         -> list[Account]
+#   get_all_accounts()              -> list[Account]
+#   get_account_by_id(account_id)   -> Account | None
+#   get_merchant_by_name(name)      -> Account | None
+#   process_payment(...)            -> dict
 # ============================================================
 
-import random
-import string
-from decimal import Decimal
+# ── Pure utility (no DB dependency) ──────────────────────────
+# Lives in its own module to avoid circular imports.
+from utils.generate_ref import generate_reference_number  # noqa: F401 — re-exported
 
-from database import db
-from models import Account, Transaction
+# ── MySQL service layer ───────────────────────────────────────
+# To swap to Firestore, replace these four lines with:
+#   from firebase.services.account_service import (
+#       get_all_accounts as _get_all_accounts, ...
+#   )
+#   from firebase.services.payment_service import process_payment as _process_payment
+from mysql.services.account_service import (
+    get_all_accounts      as _get_all_accounts,
+    get_consumer_accounts as _get_consumer_accounts,
+    get_account_by_id     as _get_account_by_id,
+    get_merchant_by_name  as _get_merchant_by_name,
+)
+from mysql.services.payment_service import (
+    process_payment as _process_payment,
+)
 
 
-def generate_reference_number():
-    """Generates a random alphanumeric reference number. e.g. TXNA3F8K2M9X"""
-    random_part = "".join(random.choices(string.ascii_uppercase + string.digits, k=10))
-    return f"TXN{random_part}"
+# ── Public wrappers ───────────────────────────────────────────
+# Thin pass-throughs so routes never import service modules directly.
+
+def get_consumer_accounts() -> list:
+    """Return all consumer accounts from MySQL."""
+    return _get_consumer_accounts()
 
 
-def get_consumer_accounts():
-    """Returns all consumer accounts."""
-    return Account.query.filter_by(type="consumer").all()
-
-
-def get_all_accounts():
-    """Returns all accounts sorted by type then name."""
-    return Account.query.order_by(Account.type, Account.name).all()
+def get_all_accounts() -> list:
+    """Return all accounts sorted by type then name from MySQL."""
+    return _get_all_accounts()
 
 
 def get_account_by_id(account_id):
-    """Returns a single account by its ID."""
-    return db.session.get(Account, account_id)
+    """Return a single account by its integer primary key."""
+    return _get_account_by_id(account_id)
 
 
-def get_merchant_by_name(merchant_name):
-    """Returns a merchant account by name."""
-    return Account.query.filter_by(name=merchant_name, type="merchant").first()
+def get_merchant_by_name(merchant_name: str):
+    """Return a merchant account by name."""
+    return _get_merchant_by_name(merchant_name)
 
 
-def process_payment(account_id, payment_request):
+def process_payment(account_id, order_id: str, amount, merchant_name: str) -> dict:
     """
-    Settles a payment. `payment_request` is the authoritative PaymentRequest
-    row (amount, merchant_account, order_id all come from THIS, never from
-    a URL or form field) - the caller only supplies which consumer account
-    the user picked.
+    Process a payment atomically against MySQL.
 
-    Does the debit + credit + Transaction record as one atomic DB
-    transaction: either all three happen, or none do.
+    Returns:
+        {"success": True,  "reference": "<TXNXXXXXXXX>"}
+        {"success": False, "error":     "<reason>"}
     """
-    consumer = get_account_by_id(account_id)
-    if not consumer or consumer.type != "consumer":
-        return {"success": False, "error": "Account not found."}
-
-    merchant = get_merchant_by_name(payment_request.merchant_account)
-    if not merchant:
-        return {"success": False, "error": f"Merchant '{payment_request.merchant_account}' not found."}
-
-    amount = Decimal(str(payment_request.amount))
-    consumer_balance = Decimal(str(consumer.balance))
-    if consumer_balance < amount:
-        return {"success": False, "error": "Insufficient balance."}
-
-    try:
-        consumer.balance = consumer_balance - amount
-        merchant.balance = Decimal(str(merchant.balance)) + amount
-        reference = generate_reference_number()
-        txn = Transaction(
-            order_id=payment_request.order_id,
-            from_account=consumer.account_number,
-            to_account=merchant.account_number,
-            amount=amount,
-            reference_number=reference,
-        )
-        db.session.add(txn)
-        db.session.commit()
-        return {"success": True, "reference": reference, "account": consumer}
-    except Exception as e:
-        db.session.rollback()
-        return {"success": False, "error": f"Transaction failed: {str(e)}"}
+    return _process_payment(
+        account_id=account_id,
+        order_id=order_id,
+        amount=amount,
+        merchant_name=merchant_name,
+    )
