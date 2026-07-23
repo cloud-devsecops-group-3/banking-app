@@ -15,10 +15,9 @@ version: "3.9"
 services:
 
   # ── MySQL Database ──────────────────────────────────────
+depends_on:
   mysql:
-    image: mysql:8.0
-    container_name: banking_mysql
-    restart: unless-stopped
+    condition: service_healthy
 
     # Load environment variables from your .env file
     env_file:
@@ -65,7 +64,7 @@ services:
       # Override DB_HOST to use the Docker service name (not localhost)
       # Docker Compose creates an internal network where services
       # can reach each other by their service name.
-      DB_HOST: mysql
+      DB_HOST: ${DB_HOST}
 
     ports:
       # Map container port 5001 to host port 5001
