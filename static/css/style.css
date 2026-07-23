@@ -795,3 +795,237 @@ body {
   pointer-events: none;
   transform: translateY(6px);
 }
+
+/* ============================================================
+   QR GENERATOR PAGE  (/qr)
+   ============================================================ */
+
+.qr-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ew-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.4rem;
+  display: block;
+}
+
+.qr-input {
+  border: 1.5px solid var(--ew-border);
+  border-radius: var(--radius-md);
+  font-size: 0.9375rem;
+  color: var(--ew-text);
+  background: var(--ew-surface);
+  transition: border-color 0.15s;
+}
+
+.qr-input:focus {
+  border-color: var(--ew-green);
+  box-shadow: 0 0 0 3px rgba(0,131,62,0.1);
+  outline: none;
+}
+
+.qr-input-prefix {
+  background: var(--ew-surface-2);
+  border: 1.5px solid var(--ew-border);
+  border-right: none;
+  border-radius: var(--radius-md) 0 0 var(--radius-md);
+  color: var(--ew-green);
+  font-weight: 600;
+}
+
+/* Demo info badge */
+.qr-demo-badge {
+  background: var(--ew-purple-tint);
+  border: 1px solid var(--ew-purple-tint2);
+  color: var(--ew-purple-dark);
+  border-radius: var(--radius-md);
+  padding: 0.6rem 0.9rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+/* QR output section */
+.qr-output {
+  animation: fadeSlideUp 0.3s ease both;
+}
+
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* QR canvas wrapper — centers and frames the QR image */
+.qr-canvas-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #fff;
+  border: 2px solid var(--ew-border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  position: relative;
+}
+
+/* Green corner accents on the QR frame */
+.qr-canvas-wrap::before,
+.qr-canvas-wrap::after {
+  content: '';
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border-color: var(--ew-green);
+  border-style: solid;
+}
+
+.qr-canvas-wrap::before {
+  top: 10px; left: 10px;
+  border-width: 3px 0 0 3px;
+  border-radius: 4px 0 0 0;
+}
+
+.qr-canvas-wrap::after {
+  bottom: 10px; right: 10px;
+  border-width: 0 3px 3px 0;
+  border-radius: 0 0 4px 0;
+}
+
+/* Encoded URL display box */
+.qr-url-box {
+  background: var(--ew-surface-2);
+  border: 1px solid var(--ew-border);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1rem;
+}
+
+.qr-url-text {
+  font-size: 0.75rem;
+  color: var(--ew-green-dark);
+  word-break: break-all;
+  line-height: 1.5;
+}
+
+/* ============================================================
+   QR SCANNER PAGE  (/qr-scanner)
+   ============================================================ */
+
+/* Outer wrapper — gives the scanner a fixed aspect ratio */
+.scanner-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  max-height: 340px;
+  background: #000;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 2px solid var(--ew-border);
+}
+
+/* The live video feed fills the entire wrapper */
+.scanner-wrap video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* The canvas is hidden — jsQR reads from it but we don't show it */
+.scanner-wrap canvas {
+  display: none;
+}
+
+/* Dark vignette overlay with a transparent center window */
+.scanner-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.45);
+}
+
+/* The clear square in the center where the QR should be placed */
+.scanner-frame {
+  position: relative;
+  width: 62%;
+  aspect-ratio: 1 / 1;
+  background: transparent;
+  box-shadow: 0 0 0 9999px rgba(0,0,0,0.45);
+  border-radius: 4px;
+}
+
+/* Animated scan line that sweeps top to bottom */
+.scanner-line {
+  position: absolute;
+  left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--ew-green), transparent);
+  box-shadow: 0 0 8px var(--ew-green);
+  animation: scanSweep 1.8s ease-in-out infinite;
+}
+
+@keyframes scanSweep {
+  0%   { top: 0%; }
+  50%  { top: calc(100% - 2px); }
+  100% { top: 0%; }
+}
+
+/* Corner bracket decorations on the scan frame */
+.corner {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-color: #fff;
+  border-style: solid;
+}
+
+.corner.tl { top: -1px;  left: -1px;  border-width: 3px 0 0 3px; border-radius: 3px 0 0 0; }
+.corner.tr { top: -1px;  right: -1px; border-width: 3px 3px 0 0; border-radius: 0 3px 0 0; }
+.corner.bl { bottom: -1px; left: -1px;  border-width: 0 0 3px 3px; border-radius: 0 0 0 3px; }
+.corner.br { bottom: -1px; right: -1px; border-width: 0 3px 3px 0; border-radius: 0 0 3px 0; }
+
+/* Status badge at the bottom of the scanner viewport */
+.scanner-status {
+  position: absolute;
+  bottom: 0.75rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.65);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 500;
+  padding: 0.3rem 0.85rem;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+  backdrop-filter: blur(4px);
+}
+
+/* Pulsing dot inside the status badge */
+.scanner-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.scanner-dot-scanning {
+  background: var(--ew-green);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+.scanner-dot-success {
+  background: #4ade80;
+}
+
+.scanner-dot-error {
+  background: var(--ew-lust);
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1;   transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(0.7); }
+}

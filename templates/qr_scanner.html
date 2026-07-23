@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+{% block title %}QR Scanner — EastWest Bank{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-9 col-lg-7 col-xl-6">
+
+      <div class="ew-card shadow-sm">
+
+        <!-- Header -->
+        <div class="ew-card-header text-center">
+          <div class="ew-bank-icon mb-3">
+            <i class="bi bi-camera"></i>
+          </div>
+          <h1 class="h4 fw-bold mb-1">Scan QR Code</h1>
+          <p class="text-muted small mb-0">Point your camera at a payment QR code</p>
+        </div>
+
+        <div class="px-4 py-4">
+
+          <!-- Demo badge -->
+          <div class="qr-demo-badge mb-4">
+            <i class="bi bi-info-circle me-1"></i>
+            Frontend demo — camera access required. Works on desktop and mobile.
+          </div>
+
+          <!-- Scanner viewport -->
+          <div class="scanner-wrap" id="scannerWrap">
+
+            <!-- Live camera feed (hidden — used as source for jsQR) -->
+            <video id="scanVideo" playsinline muted></video>
+
+            <!-- Canvas where jsQR reads frames -->
+            <canvas id="scanCanvas"></canvas>
+
+            <!-- Animated scan line overlay -->
+            <div class="scanner-overlay">
+              <div class="scanner-frame">
+                <div class="scanner-line" id="scanLine"></div>
+                <!-- Corner brackets -->
+                <span class="corner tl"></span>
+                <span class="corner tr"></span>
+                <span class="corner bl"></span>
+                <span class="corner br"></span>
+              </div>
+            </div>
+
+            <!-- Status badge inside the viewport -->
+            <div class="scanner-status" id="scannerStatus">
+              <span class="scanner-dot" id="scanDot"></span>
+              <span id="scannerStatusText">Starting camera…</span>
+            </div>
+
+          </div><!-- /scanner-wrap -->
+
+          <!-- Detected URL display — hidden until a QR is found -->
+          <div id="detectedBox" class="qr-url-box mt-4 d-none">
+            <div class="small text-muted mb-1">
+              <i class="bi bi-check-circle-fill text-success me-1"></i>QR Code Detected
+            </div>
+            <div id="detectedUrl" class="qr-url-text font-monospace"></div>
+          </div>
+
+          <!-- Action buttons -->
+          <div class="row g-2 mt-4">
+            <div class="col-6">
+              <button class="btn ew-btn-outline w-100" onclick="restartScanner()">
+                <i class="bi bi-arrow-clockwise me-1"></i>Restart
+              </button>
+            </div>
+            <div class="col-6">
+              <a href="/qr" class="btn ew-btn-outline w-100">
+                <i class="bi bi-qr-code me-1"></i>Generate QR
+              </a>
+            </div>
+          </div>
+
+          <!-- Manual fallback -->
+          <div class="mt-4 pt-3" style="border-top: 1px solid var(--ew-border-light);">
+            <p class="small text-muted mb-2">
+              <i class="bi bi-keyboard me-1"></i>
+              No camera? Paste a payment URL manually:
+            </p>
+            <div class="input-group">
+              <input type="text" id="manualUrl" class="form-control qr-input"
+                placeholder="http://127.0.0.1:5000/pay?order_id=1001&amount=450&merchant=pageturn-books" />
+              <button class="btn ew-btn-primary px-3" onclick="openManualUrl()">
+                <i class="bi bi-arrow-right"></i>
+              </button>
+            </div>
+          </div>
+
+        </div><!-- /px-4 -->
+
+        <div class="ew-card-footer text-center py-3">
+          <small class="text-muted">
+            <i class="bi bi-shield-lock me-1"></i>
+            Camera feed is processed locally — never uploaded
+          </small>
+        </div>
+
+      </div><!-- /ew-card -->
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- jsQR — decodes QR codes from raw image/canvas data, runs entirely in the browser -->
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+
+<script>
+  var video       = document.getElementById('scanVideo');
+  var canvas      = document.getElementById('scanCanvas');
+  var ctx         = canvas.getContext('2d');
+  var statusText  = document.getElementById('scannerStatusText');
+  var scanDot     = document.getElementById('scanDot');
+  var detectedBox = document.getElementById('detectedBox');
+  var detectedUrl = document.getElementById('detectedUrl');
+  var animFrame   = null;
+  var detected    = false;
+
+  /* ── Start the camera and begin scanning ── */
+  function startScanner() {
+    detected = false;
+    detectedBox.classList.add('d-none');
+    setStatus('scanning', 'Scanning…');
+
+    navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment' }   /* prefer rear camera on mobile */
+    })
+    .then(function(stream) {
+      video.srcObject = stream;
+      video.play();
+      setStatus('scanning', 'Scanning…');
+      requestAnimationFrame(scanFrame);
+    })
+    .catch(function(err) {
+      setStatus('error', 'Camera access denied. Use the manual input below.');
+      console.warn('Camera error:', err);
+    });
+  }
+
+  /* ── Read one frame and pass it to jsQR ── */
+  function scanFrame() {
+    if (detected) return;
+
+    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+      /* Match canvas size to the video frame */
+      canvas.width  = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      /* jsQR reads the raw pixel data and returns a result if a QR is found */
+      var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      var code      = jsQR(imageData.data, imageData.width, imageData.height, {
+        inversionAttempts: 'dontInvert'
+      });
+
+      if (code) {
+        onQRDetected(code.data);
+        return;
+      }
+    }
+
+    animFrame = requestAnimationFrame(scanFrame);
+  }
+
+  /* ── Called when a QR code is successfully decoded ── */
+  function onQRDetected(url) {
+    detected = true;
+    cancelAnimationFrame(animFrame);
+
+    /* Stop the camera stream */
+    if (video.srcObject) {
+      video.srcObject.getTracks().forEach(function(t) { t.stop(); });
+    }
+
+    setStatus('success', 'QR Detected!');
+
+    /* Show the detected URL */
+    detectedUrl.textContent = url;
+    detectedBox.classList.remove('d-none');
+
+    /* Only redirect if it looks like a valid payment URL */
+    if (url.includes('/pay?')) {
+      setStatus('success', 'Redirecting to payment…');
+      setTimeout(function() {
+        window.location.href = url;
+      }, 1200);
+    } else {
+      setStatus('error', 'Not a payment QR. Try again.');
+      detected = false;
+      setTimeout(startScanner, 2000);
+    }
+  }
+
+  /* ── Update the status badge ── */
+  function setStatus(state, text) {
+    statusText.textContent = text;
+    scanDot.className = 'scanner-dot scanner-dot-' + state;
+  }
+
+  /* ── Restart button ── */
+  function restartScanner() {
+    if (video.srcObject) {
+      video.srcObject.getTracks().forEach(function(t) { t.stop(); });
+    }
+    cancelAnimationFrame(animFrame);
+    startScanner();
+  }
+
+  /* ── Manual URL input fallback ── */
+  function openManualUrl() {
+    var url = document.getElementById('manualUrl').value.trim();
+    if (!url) { alert('Please paste a payment URL.'); return; }
+    if (url.includes('/pay?')) {
+      window.location.href = url;
+    } else {
+      alert('That does not look like a valid payment URL.\nIt should contain /pay?order_id=...');
+    }
+  }
+
+  /* Allow pressing Enter in the manual input */
+  document.getElementById('manualUrl').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') openManualUrl();
+  });
+
+  /* Start on page load */
+  window.addEventListener('DOMContentLoaded', startScanner);
+</script>
+{% endblock %}

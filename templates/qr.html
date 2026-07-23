@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% block title %}QR Generator — EastWest Bank{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-9 col-lg-7 col-xl-6">
+
+      <div class="ew-card shadow-sm">
+
+        <!-- Header -->
+        <div class="ew-card-header text-center">
+          <div class="ew-bank-icon mb-3">
+            <i class="bi bi-qr-code"></i>
+          </div>
+          <h1 class="h4 fw-bold mb-1">QR Payment Generator</h1>
+          <p class="text-muted small mb-0">Simulates the Merchant App generating a payment QR</p>
+        </div>
+
+        <div class="px-4 py-4">
+
+          <!-- Demo badge -->
+          <div class="qr-demo-badge mb-4">
+            <i class="bi bi-info-circle me-1"></i>
+            Frontend demo — fill in the fields and click Generate QR
+          </div>
+
+          <!-- Form -->
+          <div class="mb-3">
+            <label class="qr-label">Order ID</label>
+            <input type="text" id="orderId" class="form-control qr-input" value="1001" placeholder="e.g. 1001" />
+          </div>
+
+          <div class="mb-3">
+            <label class="qr-label">Amount (₱)</label>
+            <div class="input-group">
+              <span class="input-group-text qr-input-prefix">₱</span>
+              <input type="number" id="amount" class="form-control qr-input" value="450.00" step="0.01" min="1" placeholder="e.g. 450.00" />
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="qr-label">Merchant</label>
+            <input type="text" id="merchant" class="form-control qr-input" value="pageturn-books" placeholder="e.g. pageturn-books" />
+          </div>
+
+          <!-- Generate button -->
+          <div class="d-grid mb-4">
+            <button class="btn ew-btn-primary btn-lg" onclick="generateQR()">
+              <i class="bi bi-qr-code-scan me-2"></i>Generate QR Code
+            </button>
+          </div>
+
+          <!-- QR Output — hidden until generated -->
+          <div id="qrOutput" class="qr-output d-none">
+
+            <!-- QR canvas -->
+            <div class="qr-canvas-wrap">
+              <div id="qrCanvas"></div>
+            </div>
+
+            <!-- Encoded URL display -->
+            <div class="qr-url-box mt-3">
+              <div class="small text-muted mb-1">
+                <i class="bi bi-link-45deg me-1"></i>Encoded Payment URL
+              </div>
+              <div id="qrUrl" class="qr-url-text font-monospace"></div>
+            </div>
+
+            <!-- Action buttons -->
+            <div class="row g-2 mt-3">
+              <div class="col-6">
+                <a id="qrPayLink" href="#" class="btn ew-btn-primary w-100">
+                  <i class="bi bi-arrow-right-circle me-1"></i>Open Payment Page
+                </a>
+              </div>
+              <div class="col-6">
+                <a href="/qr-scanner" class="btn ew-btn-outline w-100">
+                  <i class="bi bi-camera me-1"></i>Open Scanner
+                </a>
+              </div>
+            </div>
+
+          </div><!-- /qrOutput -->
+
+        </div><!-- /px-4 -->
+
+        <div class="ew-card-footer text-center py-3">
+          <small class="text-muted">
+            <i class="bi bi-shield-lock me-1"></i>
+            QR code is generated locally — no data is sent to any server
+          </small>
+        </div>
+
+      </div><!-- /ew-card -->
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- qrcode.js — generates QR codes entirely in the browser, no server needed -->
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+
+<script>
+  var qrInstance = null;
+
+  function generateQR() {
+    var orderId  = document.getElementById('orderId').value.trim();
+    var amount   = document.getElementById('amount').value.trim();
+    var merchant = document.getElementById('merchant').value.trim();
+
+    // Basic validation
+    if (!orderId || !amount || !merchant) {
+      alert('Please fill in all fields.');
+      return;
+    }
+    if (parseFloat(amount) <= 0) {
+      alert('Amount must be greater than zero.');
+      return;
+    }
+
+    // Build the payment URL that the QR will encode
+    var base = window.location.origin;
+    var url  = base + '/pay?order_id=' + encodeURIComponent(orderId)
+                    + '&amount='    + encodeURIComponent(parseFloat(amount).toFixed(2))
+                    + '&merchant='  + encodeURIComponent(merchant);
+
+    // Clear previous QR if any
+    var canvas = document.getElementById('qrCanvas');
+    canvas.innerHTML = '';
+    if (qrInstance) { qrInstance.clear(); }
+
+    // Generate the QR code into the canvas div
+    qrInstance = new QRCode(canvas, {
+      text:         url,
+      width:        220,
+      height:       220,
+      colorDark:    '#231F20',   /* Attractive Black */
+      colorLight:   '#ffffff',
+      correctLevel: QRCode.CorrectLevel.H
+    });
+
+    // Show the URL and update the "Open Payment Page" link
+    document.getElementById('qrUrl').textContent = url;
+    document.getElementById('qrPayLink').href = url;
+
+    // Reveal the output section
+    document.getElementById('qrOutput').classList.remove('d-none');
+
+    // Smooth scroll to the QR
+    document.getElementById('qrOutput').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  // Auto-generate on page load so there's something to see immediately
+  window.addEventListener('DOMContentLoaded', generateQR);
+</script>
+{% endblock %}

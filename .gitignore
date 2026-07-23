@@ -1,108 +1,126 @@
-# Byte-compiled / optimized / DLL files
+# ==========================================================
+# Python
+# ==========================================================
 __pycache__/
 *.py[cod]
 *$py.class
-
-# Python cache
 *.pyo
 *.pyd
-
-# C extensions
 *.so
 
-# Distribution / packaging
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-share/python-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
-
-# Flask instance folder
-instance/
-
-# Flask cache
-.webassets-cache/
-
+# ==========================================================
 # Virtual Environments
-.venv/
+# ==========================================================
 venv/
-ENV/
+.venv/
 env/
+ENV/
 
-# IDEs and Editors
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# Database files
-*.sqlite3
-*.db
-
-# Environment variables & secrets
+# ==========================================================
+# Environment Variables & Secrets
+# ==========================================================
 .env
 .env.*
+!.env.example
 .flaskenv
 secrets.toml
 
-# Testing and Coverage
-.pytest_cache/
-.coverage
-coverage.xml
-htmlcov/
+# ==========================================================
+# Flask
+# ==========================================================
+instance/
+.webassets-cache/
 
-# Logs
-*.log
-logs/
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# Jupyter
-.ipynb_checkpoints/
-
-# Docker
-docker-compose.override.yml
-
-# Python type checker
-.mypy_cache/
-.pyre/
-
-# Ruff
-.ruff_cache/
-
-# PyCharm
-.idea/
-
-# VS Code workspace
-*.code-workspace
-
-# Temporary files
-*.tmp
-*.temp
-
-# Flask uploads (if user uploaded files shouldn't be tracked)
-uploads/
-
-# Ignore local database if using SQLite
+# ==========================================================
+# Database Files
+# ==========================================================
+*.db
+*.sqlite3
+*.sqlite
 bank.db
 database.db
 
-# Ignore generated images/cache
-static/images/uploads/
+# ==========================================================
+# Logs
+# ==========================================================
+*.log
+logs/
 
-routes/
+# ==========================================================
+# Testing & Coverage
+# ==========================================================
+.pytest_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
+# ==========================================================
+# Type Checkers & Linters
+# ==========================================================
+.mypy_cache/
+.pyre/
+.ruff_cache/
+
+# ==========================================================
+# Build & Packaging
+# ==========================================================
+.Python
+build/
+dist/
+downloads/
+.eggs/
+*.egg
+*.egg-info/
+pip-wheel-metadata/
+wheels/
+share/python-wheels/
+MANIFEST
+
+# ==========================================================
+# IDEs & Editors
+# ==========================================================
+.vscode/
+.idea/
+*.code-workspace
+*.swp
+*.swo
+
+# ==========================================================
+# Jupyter Notebook
+# ==========================================================
+.ipynb_checkpoints/
+
+# ==========================================================
+# Docker
+# ==========================================================
+docker-compose.override.yml
+
+# ==========================================================
+# Uploads & Generated Files
+# ==========================================================
+uploads/
+static/images/uploads/
+static/uploads/
+media/
+
+# ==========================================================
+# Temporary Files
+# ==========================================================
+*.tmp
+*.temp
+*.bak
+*.orig
+
+# ==========================================================
+# Operating System Files
+# ==========================================================
+.DS_Store
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ==========================================================
+# Miscellaneous
+# ==========================================================
+.cache/
