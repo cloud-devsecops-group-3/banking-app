@@ -22,12 +22,37 @@ class Account(db.Model):
     # Decimal(15,2) stores money precisely (avoids floating point errors)
     balance = db.Column(db.Numeric(15, 2), nullable=False, default=0.00)
 
+    # Login credentials - only set for consumer accounts. Merchant accounts
+    # never log in; they're just a payee name referenced by the ecommerce
+    # app's merchant_account field.
+    username = db.Column(db.String(50), unique=True, nullable=True)
+    password_hash = db.Column(db.String(255), nullable=True)
+
     def masked_account_number(self):
         """Returns account number with all but last 4 digits masked. e.g. ••••7890"""
         return "••••" + self.account_number[-4:]
 
     def __repr__(self):
         return f"<Account {self.name}>"
+
+
+class AdminUser(db.Model):
+    """A separate login for viewing the balances dashboard.
+
+    Deliberately NOT an Account - admin can view everything but never
+    holds a balance or moves money. Keeping "can view" and "can hold
+    funds" as different models means an admin login can never
+    accidentally become a payment source.
+    """
+
+    __tablename__ = "admin_users"
+
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(50), unique=True, nullable=False)
+    password_hash = db.Column(db.String(255), nullable=False)
+
+    def __repr__(self):
+        return f"<AdminUser {self.username}>"
 
 
 class PaymentRequest(db.Model):

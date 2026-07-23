@@ -22,10 +22,12 @@ def create_app(config_overrides: dict | None = None) -> Flask:
     # --------------------------------------------------------
     # Register Blueprints (route files)
     # --------------------------------------------------------
+    from routes.auth import auth_bp
     from routes.payment import payment_bp
     from routes.dashboard import dashboard_bp
     from routes.health import health_bp
 
+    app.register_blueprint(auth_bp)
     app.register_blueprint(payment_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(health_bp)

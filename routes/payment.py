@@ -5,19 +5,22 @@
 # Real flow (matches the contract agreed with the ecommerce team):
 #   1. POST /api/payment-requests   <- ecommerce calls this at checkout
 #   2. GET  /qr/<transaction_id>.png -> ecommerce embeds this image
-#   3. GET  /pay/<transaction_id>   -> customer opens this (scan or click)
-#   4. POST /pay/<transaction_id>   -> select account
-#   5. POST /pay/<transaction_id>/confirm -> settle, then call the
+#   3. GET  /pay/<transaction_id>   -> customer opens this (scan or click);
+#      redirects to /login first if not already logged in
+#   4. POST /pay/<transaction_id>/confirm -> settle, then call the
 #      ecommerce callback_url with the result
-#   6. GET  /complete                -> success page, offers return_url
+#   5. GET  /complete                -> success page, offers return_url
 #
 # Every step after (1) looks the transaction up by transaction_id and
 # reads amount/merchant_account from the PaymentRequest row - never from
-# a URL query string or a hidden form field. That's what makes this safe:
-# nothing the browser sends can change how much money moves.
+# a URL query string or a hidden form field. The paying account works the
+# same way: it comes from session["account_id"] (set at login), never
+# from a form field, so there's no account picker and nothing the
+# browser sends can change which account gets debited.
 # ============================================================
 
 import uuid
+from decimal import Decimal, InvalidOperation
 from io import BytesIO
 
 import qrcode
@@ -36,7 +39,8 @@ from flask import (
 
 from database import db
 from models import PaymentRequest
-from utils.helpers import get_account_by_id, get_consumer_accounts, process_payment
+from utils.auth import login_required
+from utils.helpers import get_account_by_id, process_payment
 
 payment_bp = Blueprint("payment", __name__)
 
@@ -59,17 +63,17 @@ def create_payment_request():
         return jsonify(error=f"missing fields: {', '.join(missing)}"), 400
 
     try:
-        amount = float(data["amount"])
+        amount = Decimal(str(data["amount"]))
         if amount <= 0:
-            raise ValueError
-    except (TypeError, ValueError):
+            raise InvalidOperation
+    except (TypeError, InvalidOperation):
         return jsonify(error="amount must be a positive number"), 400
 
     transaction_id = f"txn-{uuid.uuid4().hex[:16]}"
     payment_request = PaymentRequest(
         transaction_id=transaction_id,
         order_id=str(data["order_id"]),
-        amount=data["amount"],
+        amount=amount,
         merchant_account=data["merchant_account"],
         callback_url=data["callback_url"],
         return_url=data.get("return_url"),
@@ -87,7 +91,7 @@ def qr_image(transaction_id):
     """Generated on demand - no file storage needed. The QR encodes a URL
     into this app's own /pay page, not raw payment details, so scanning
     it can't be used to forge a different amount."""
-    pay_url = url_for("payment.select_account", transaction_id=transaction_id, _external=True)
+    pay_url = url_for("payment.pay_page", transaction_id=transaction_id, _external=True)
     img = qrcode.make(pay_url)
     buf = BytesIO()
     img.save(buf, format="PNG")
@@ -110,39 +114,22 @@ def _get_pending_payment_request(transaction_id):
 
 
 @payment_bp.route("/pay/<transaction_id>", methods=["GET"])
-def select_account(transaction_id):
-    """PAGE 1 — Account Selection."""
+@login_required
+def pay_page(transaction_id):
+    """The only page before settling. No account picker - the logged-in
+    session already tells us which account is paying."""
     payment_request = _get_pending_payment_request(transaction_id)
     if not payment_request:
         return render_template("error.html", message="This payment link is invalid or already used."), 404
 
-    accounts = get_consumer_accounts()
-    return render_template(
-        "select_account.html",
-        accounts=accounts,
-        transaction_id=transaction_id,
-        order_id=payment_request.order_id,
-        amount=payment_request.amount,
-        merchant=payment_request.merchant_account,
-    )
-
-
-@payment_bp.route("/pay/<transaction_id>", methods=["POST"])
-def confirm_payment(transaction_id):
-    """PAGE 2 — Confirm Payment."""
-    payment_request = _get_pending_payment_request(transaction_id)
-    if not payment_request:
-        return render_template("error.html", message="This payment link is invalid or already used."), 404
-
-    account_id = request.form.get("account_id")
-    if not account_id:
-        return redirect(url_for("payment.select_account", transaction_id=transaction_id))
-
-    account = get_account_by_id(int(account_id))
+    account = get_account_by_id(session["account_id"])
     if not account:
-        return redirect(url_for("payment.select_account", transaction_id=transaction_id))
+        # Session points at an account that no longer exists - treat as
+        # logged out rather than crash.
+        session.clear()
+        return redirect(url_for("auth.login", next=request.path))
 
-    balance_after = account.balance - payment_request.amount
+    balance_after = Decimal(str(account.balance)) - Decimal(str(payment_request.amount))
 
     return render_template(
         "confirm_payment.html",
@@ -156,18 +143,24 @@ def confirm_payment(transaction_id):
 
 
 @payment_bp.route("/pay/<transaction_id>/confirm", methods=["POST"])
+@login_required
 def process(transaction_id):
     """Settles the payment, then calls the ecommerce app's webhook."""
     payment_request = _get_pending_payment_request(transaction_id)
     if not payment_request:
         return render_template("error.html", message="This payment link is invalid or already used."), 404
 
-    account_id = request.form.get("account_id")
-    result = process_payment(account_id=int(account_id), payment_request=payment_request)
+    # account_id comes ONLY from the session, never from a form field -
+    # otherwise a user could edit a hidden input to pay from an account
+    # that isn't theirs.
+    account_id = session["account_id"]
+    result = process_payment(account_id=account_id, payment_request=payment_request)
 
     if not result["success"]:
-        account = get_account_by_id(int(account_id))
-        balance_after = account.balance - payment_request.amount if account else None
+        account = get_account_by_id(account_id)
+        balance_after = (
+            Decimal(str(account.balance)) - Decimal(str(payment_request.amount)) if account else None
+        )
         return render_template(
             "confirm_payment.html",
             account=account,

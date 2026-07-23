@@ -58,12 +58,13 @@ def process_payment(account_id, payment_request):
         return {"success": False, "error": f"Merchant '{payment_request.merchant_account}' not found."}
 
     amount = Decimal(str(payment_request.amount))
-    if consumer.balance < amount:
+    consumer_balance = Decimal(str(consumer.balance))
+    if consumer_balance < amount:
         return {"success": False, "error": "Insufficient balance."}
 
     try:
-        consumer.balance -= amount
-        merchant.balance += amount
+        consumer.balance = consumer_balance - amount
+        merchant.balance = Decimal(str(merchant.balance)) + amount
         reference = generate_reference_number()
         txn = Transaction(
             order_id=payment_request.order_id,

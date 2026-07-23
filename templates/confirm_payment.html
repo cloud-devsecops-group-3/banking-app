@@ -1,12 +1,11 @@
 <!--
   confirm_payment.html
-  PAGE 2 — Confirm Payment
-
-  Shows a full payment summary for the user to review.
-  Two buttons: Back (returns to account selection) and Confirm Payment.
+  Payment confirmation - the only step before settling. There's no
+  account picker anymore: the logged-in session already determines
+  which account is paying.
 
   Variables passed from routes/payment.py:
-    - account       : Account object (the selected consumer)
+    - account       : Account object (the logged-in consumer's account)
     - transaction_id: string, identifies the PaymentRequest row
     - order_id      : string, DISPLAY ONLY
     - amount        : Decimal, DISPLAY ONLY
@@ -97,44 +96,28 @@
             </div>
           </div>
 
-          <!--
-            Two forms side by side:
-            1. Back button — links back to account selection with original params
-            2. Confirm Payment form — submits to POST /confirm-payment
-          -->
-          <div class="row g-3">
-            <!-- Back Button -->
-            <div class="col-5">
-              <a
-                href="{{ url_for('payment.select_account', transaction_id=transaction_id) }}"
-                class="btn ew-btn-outline w-100 btn-lg"
+          <!-- Confirm Payment Form -->
+          <form method="POST" action="{{ url_for('payment.process', transaction_id=transaction_id) }}" id="confirmForm">
+            <div class="d-grid mb-3">
+              <button
+                type="submit"
+                class="btn ew-btn-primary btn-lg"
+                id="confirmBtn"
+                onclick="showLoading()"
               >
-                <i class="bi bi-arrow-left me-1"></i> Back
-              </a>
+                <span id="btnText">
+                  <i class="bi bi-lock-fill me-1"></i> Confirm Payment
+                </span>
+                <span id="btnSpinner" class="d-none">
+                  <span class="spinner-border spinner-border-sm me-1"></span>
+                  Processing...
+                </span>
+              </button>
             </div>
+          </form>
 
-            <!-- Confirm Payment Form -->
-            <div class="col-7">
-              <form method="POST" action="{{ url_for('payment.process', transaction_id=transaction_id) }}" id="confirmForm">
-                <!-- Only the chosen account needs to travel forward. -->
-                <input type="hidden" name="account_id" value="{{ account.id }}" />
-
-                <button
-                  type="submit"
-                  class="btn ew-btn-primary w-100 btn-lg"
-                  id="confirmBtn"
-                  onclick="showLoading()"
-                >
-                  <span id="btnText">
-                    <i class="bi bi-lock-fill me-1"></i> Confirm Payment
-                  </span>
-                  <span id="btnSpinner" class="d-none">
-                    <span class="spinner-border spinner-border-sm me-1"></span>
-                    Processing...
-                  </span>
-                </button>
-              </form>
-            </div>
+          <div class="text-center">
+            <a href="{{ url_for('auth.logout') }}" class="small text-muted">Not you? Log out</a>
           </div>
 
           <!-- Security note -->
