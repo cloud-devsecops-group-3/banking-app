@@ -31,6 +31,8 @@ class Config:
         f"@{_DB_HOST}:{_DB_PORT}/{_DB_NAME}"
     )
 
+    BANKING_PUBLIC_BASE = os.getenv("BANKING_PUBLIC_BASE", "http://54.211.30.30.nip.io").rstrip("/")
+
     # Disable SQLAlchemy modification tracking (saves memory)
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 

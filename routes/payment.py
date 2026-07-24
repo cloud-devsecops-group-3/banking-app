@@ -82,7 +82,8 @@ def create_payment_request():
     db.session.add(payment_request)
     db.session.commit()
 
-    qr_url = url_for("payment.qr_image", transaction_id=transaction_id, _external=True)
+    base = current_app.config.get("BANKING_PUBLIC_BASE") or request.host_url.rstrip("/")
+    qr_url = f"{base}/qr/{transaction_id}.png"
     return jsonify(transaction_id=transaction_id, qr_url=qr_url), 201
 
 
