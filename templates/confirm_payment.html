@@ -145,7 +145,10 @@
   function showLoading() {
     document.getElementById("btnText").classList.add("d-none");
     document.getElementById("btnSpinner").classList.remove("d-none");
-    document.getElementById("confirmBtn").disabled = true;
+    setTimeout(function () {
+      document.getElementById("confirmBtn").disabled = true;
+    }, 0);
+
   }
 </script>
 {% endblock %}

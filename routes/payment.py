@@ -203,10 +203,18 @@ def _notify_ecommerce(payment_request, outcome):
                 "status": outcome,
                 "transaction_id": payment_request.transaction_id,
             },
-            timeout=5,
+            # (connect_timeout, read_timeout) - a single float only bounds
+            # the read; slow/failing DNS resolution for a dead callback
+            # host can still stall well past it. Splitting the two keeps
+            # this call from hanging the whole request indefinitely.
+            timeout=(3, 5),
         )
-    except requests.RequestException:
-        pass
+    except requests.RequestException as exc:
+        # Best-effort: money has already moved on our side, so we don't
+        # fail the confirm request just because the notification failed.
+        # But swallowing this with zero trace makes exactly this kind of
+        # misconfigured-callback-URL bug invisible - log it.
+        print(f"[payment] callback to {payment_request.callback_url} failed: {exc}")
 
 
 @payment_bp.route("/complete")
