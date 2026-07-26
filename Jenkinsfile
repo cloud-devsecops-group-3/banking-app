@@ -3,11 +3,11 @@ pipeline {
 
     environment {
         // Single dev host — same box the ecommerce pipeline deploys to.
-        DEV_SERVER   = 'ubuntu@<EC2_PUBLIC_IP>'
+        DEV_SERVER   = 'ubuntu@54.226.113.220'
         COMPOSE_DIR  = '/home/ubuntu/qr-prototype'   // holds docker-compose.yml + .env
 
         IMAGE_NAME      = 'banking-app'
-        DOCKERHUB_IMAGE = 'lebaiidesuu/banking-app'
+        DOCKERHUB_IMAGE = 'kurirohan/banking-app'
         TAG              = "${env.GIT_COMMIT.take(7)}"
     }
 
@@ -73,7 +73,7 @@ pipeline {
             steps {
                 sh '''
                 sleep 10
-                curl --connect-timeout 10 --max-time 20 -f http://<EC2_PUBLIC_IP>:5001/health
+                curl --connect-timeout 10 --max-time 20 -f http://54.226.113.220:5001/health
                 '''
             }
         }
