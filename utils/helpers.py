@@ -10,7 +10,8 @@ import string
 from decimal import Decimal
 
 from database import db
-from models import Account, Transaction
+from models import Account, Transaction, PaymentRequest
+from sqlalchemy import or_
 
 
 def generate_reference_number():
@@ -28,6 +29,18 @@ def get_all_accounts():
     """Returns all accounts sorted by type then name."""
     return Account.query.order_by(Account.type, Account.name).all()
 
+def get_transactions_for_account(account_number, limit=20):
+    return (Transaction.query
+            .filter(or_(Transaction.from_account == account_number,
+                        Transaction.to_account == account_number))
+            .order_by(Transaction.transaction_date.desc())
+            .limit(limit).all())
+
+def get_payment_requests_for_merchant(merchant_name, limit=20):
+    return (PaymentRequest.query
+            .filter_by(merchant_account=merchant_name)
+            .order_by(PaymentRequest.created_at.desc())
+            .limit(limit).all())
 
 def get_account_by_id(account_id):
     """Returns a single account by its ID."""
