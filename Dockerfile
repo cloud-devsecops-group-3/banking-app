@@ -14,6 +14,12 @@ FROM python:3.11-slim
 # All subsequent commands run from this directory.
 WORKDIR /app
 
+# Unbuffer stdout/stderr - without this, print() output (seed.py's
+# logs, our startup retry logging, etc.) can sit in a buffer and never
+# reach `docker logs` until the process exits, since stdout isn't a
+# TTY inside a container.
+ENV PYTHONUNBUFFERED=1
+
 # ── Create a non-root user for security ──
 # Running as root inside a container is a security risk.
 # We create a dedicated user "appuser" to run the application.
