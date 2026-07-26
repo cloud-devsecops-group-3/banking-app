@@ -73,7 +73,7 @@ pipeline {
             steps {
                 sh '''
                 sleep 10
-                curl --connect-timeout 10 --max-time 20 -f http://54.226.113.220:5001/health
+                curl --connect-timeout 10 --max-time 20 -f http://bank.54-226-113-220.nip.io/health
                 '''
             }
         }
